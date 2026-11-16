@@ -1,0 +1,18 @@
+# Tacheo Topside - test version (GitHub). Read only by the builder's PC (Topside 1.6.102 and newer on Windows).
+# A build waiting for its hardware test; "version: none" when nothing is waiting. Same lines as latest.txt.
+version: 1.6.103
+date: 2026-11-16
+file: Tacheo-Topside-1.6.103-Windows.zip
+id: github
+url: https://github.com/p0sull02/tacheo-topside-releases/releases/download/v1.6.103/Tacheo-Topside-1.6.103-Windows.zip
+size: 14814768
+md5: 7562b0b052a9c8bbccda4a980301fb93
+tacheo: 1.16.73
+sap6: 1.16.30.4
+cave: 1.17.6
+cavec: 1.17.5
+sap5xc: 1.17.4
+sap5: 2.2.16
+notes:
+- [Topside] The first update through the GitHub releases page: Topside puts the new files in place itself (no script) and keeps the old version in "Previous version".
+- [Topside] Unit firmware unchanged from 1.6.91.
