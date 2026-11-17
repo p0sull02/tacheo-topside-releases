@@ -2,20 +2,23 @@
 # a newer Topside is out. Keep the name and the "key: value" lines as they are. url: the zip on this repository's Releases page.
 # tacheo / sap6 / sap5 / cave / cavec / sap5xc: the unit firmware inside that Topside. Notes may start with a tag:
 # [Topside] [Tacheo] [SAP6] [SAP5] (untagged = Topside).
-version: 1.6.91
-date: 2026-11-15
-file: Tacheo-Topside-1.6.91-Windows.zip
+version: 1.6.105
+date: 2026-11-16
+file: Tacheo-Topside-1.6.105-Windows.zip
 id: github
-url: https://github.com/p0sull02/tacheo-topside-releases/releases/download/v1.6.91/Tacheo-Topside-1.6.91-Windows.zip
-size: 14577434
-md5: 8047c0360eeffed2f1ce3a6a8a1afb16
+url: https://github.com/p0sull02/tacheo-topside-releases/releases/download/v1.6.105/Tacheo-Topside-1.6.105-Windows.zip
+size: 15595173
+md5: 2dc3cf5c899aac456eef36e45c5afb53
 tacheo: 1.16.73
-sap6: 1.16.30.4
-cave: 1.17.6
-cavec: 1.17.5
-sap5xc: 1.17.4
+sap6: 1.16.30.5
+cave: 1.17.8
+cavec: 1.17.8
+sap5xc: 1.17.8
 sap5: 2.2.16
 notes:
+- [Topside] 1.6.105: CartoTable projects are one file (.ctproj): the survey data, sketch scans and your Illustrator and PDF map drafts in it - File > Share Project writes that one file to hand to someone, and .ctproj files have their own icon and open with a double-click (Topside is also in Open with for Walls, Compass, Survex and Therion files). Declination is worked out for every trip from its date, with the most precise model: IGRF-14 plus NOAA's WMMHR2025 crustal field, the local magnetism of the rocks that IGRF and WMM leave out (about half a degree at Mammoth Cave). No GPS for an entrance? Place on the map > Find it on a map: type a town, then click the entrance on the lidar hillshade; Look it up fills the elevation (USGS 3DEP lidar in the US). Opening a big cave can be cancelled. Also since 1.6.91: drafted PDF / Illustrator maps line up under the line plot by themselves, a heat map of the ground, much faster opening of big caves, Publish to web, Phone link to the Topside phone app, and updates now come from GitHub.
+- [Tacheo] 1.17.8: messages from the Topside phone app 1.7 pop up on the unit's screen (Settings > Messages keeps the last ten); the phone sets the unit's clock.
+- [SAP6] 1.16.30.5: messages from the phone app, as on the Tacheo.
 - [Topside] 1.6.91: CartoTable - one viewer: tick Rotate in 3-D on the view bar and the plot becomes the 3-D cave from where you were (wheel flies into passages, Headlamp or Whole cave light, the ground see-through); Layers at the plot's top left turns names, marks, search areas and map layers on or off, and what you turn on stays on page to page. A clicked station shows how far off it could be (95%, in feet). Survey data opens on your field books - open one to read its shots and the small map goes to it. Every trip graded; right-click a trip to check it with Reckon. Data clinic: the closure score on top and Draw round an area for Reckon (whole .srv files). Reckon's corrections are only offered when the loops close better with them. No text cut off anywhere. CartoTable reopens the last cave. Unit firmware unchanged. Macs get 1.6.91 to match Windows; CartoTable is Windows-only for now.
 - [Topside] 1.6.88: CartoTable - a 3-D cave (a tile on the cave's Home page): solid passages from the LRUDs to turn, fly through and cut, lit up from a clicked station and turning round it, with SURFACE showing the ground from your downloaded elevation (see-through or solid, with contours). Trip planner (now on Home too): time by how you're moving - walking, stooping, hands-and-knees and belly crawling, breakdown, climbing, on rope; click a lead for its whole text, when it was last pushed and by whom; Resurvey picks the stretch of a bad loop worth redoing in one trip; Change, Previous trip and Swap fix a wrong pick; Print or save the brief from any view; entrances that are only map labels now route from the real entrance. Any table: point at cut-off text, or click the row, to read it all. Home scrolls on a small window. Fixed: the plot could stop drawing (a red cross) when zoomed in close. Unit firmware unchanged. Macs get 1.6.88 too, to match Windows; CartoTable itself is Windows-only for now, so on a Mac nothing else changes.
 - [Topside] 1.6.84: CartoTable - after Reckon corrects, the plot shows the old and new survey together; OK keeps it, Export report makes a PDF of what changed for your data team. Every survey needs a prefix: a cave with surveys that have none asks for one per survey before it opens (Walls files get a #Prefix line; a .bak is kept). Trip planner: route with times by passage size, rigging, leads along the way with what to expect, resurvey targets, trip ideas and a printable brief. Float its traverse names a misnamed tie. Trip reports go into the cave report. Map symbols stay paper-map size. On a Mac, clicking a card on the welcome screen no longer closes Topside (thanks to Adam for the report). Unit firmware unchanged.

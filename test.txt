@@ -1,6 +1,6 @@
 # Tacheo Topside - test version (GitHub). Read only by the builder's PC (Topside 1.6.102 and newer on Windows).
 # A build waiting for its hardware test; "version: none" when nothing is waiting. Same lines as latest.txt.
-version: 1.6.103
+version: none
 date: 2026-11-16
 file: Tacheo-Topside-1.6.103-Windows.zip
 id: github
