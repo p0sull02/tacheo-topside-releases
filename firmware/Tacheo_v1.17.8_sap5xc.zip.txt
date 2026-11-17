@@ -1,0 +1,103 @@
+released 2026-11-16 (Topside 1.6.105, Windows + Mac; Sully: "ship all updates fleetwide. All devices, all programs.")
+Tacheo firmware 1.17.8 (cave = Tacheo 1, cavec = Tacheo 2 colour, sap5x, sap5xc) - 16 Nov 2026 - tried on TCH-260004 (cavec, messages end to end) and released fleetwide on Sully's word
+================================================================================================================
+
+What (Sully, 16 Nov 2026):
+  "Unfreese the frimware and update the tacheo. On the phone, Have the appearance similar to the modern day chat message
+   session. This will only be a one way message. Have the message pop up on the tacheo during whatever screen the surveyor
+   is currently on." / "this will be for all devices: sap5, sap6, sap5xc, T1 and T2." / "Do a smaller than full screen, like a
+   popup message," / "slightly dim the background around the message, and the message appears in a box in the middle" /
+   "In settings, if you can, have a way to retrieve previous messages sent to the Tacheo."
+
+  Messages from the Topside phone app (Survey and sketch > the chat panel):
+  - The phone sends MSG=<text> / MSG+=<more> / MSGGO=<id> over Bluetooth (the console, Nordic UART). USB works too.
+  - The message pops up over whatever page is showing, with a chime (two rising notes): the page dimmed round it (OLED: every
+    other dot; colour: each colour a step darker, the battery pill as it is) and the message in a box in the middle,
+    MESSAGE / phone in its title, up to 100 characters.
+  - Any button puts it away; that press does nothing else. The page comes back exactly as it was.
+  - It waits while the unit can't be interrupted: a shot being measured, a calibration hold, the tap-countdown, a cross-section
+    sweep, standby, the start-up animation - and shows the moment that's over.
+  - The unit tells the phone MSG SHOWN <id> when it's up and MSG READ <id> when a button put it away (the phone's ticks).
+  - Settings > Messages: the last 10, newest first, with the time the phone set (TIME=) - pick one to see it in the same box.
+    Kept in /msglog.bin over a restart.
+  - MSG? answers MSG <IDLE|WAITING|SHOWING> <id> <shown> <read> <kept> (and tells the phone this firmware has messages).
+
+How:
+  msgCommand() in handleCommand; msgService() at the end of service() (every page's wait calls it); msgPopup() keeps the
+  page's picture (the 128 x 64 buffer, the 1.5" buffer, and on the colour screen its 38 KB frame in /msgpage.bin on the
+  2 MB chip - there is no RAM for a second frame), draws the dimmed page and the box, waits for a button (service() still
+  runs; awake while it waits, away by itself after 10 min), and puts the picture back. MsgHoldGuard in measureShot() and
+  capturePoint(). Settings > Messages is the last row before Back (SET_MSGS; the sim's SETTINGS_MSGS_ROW).
+  sap5x: unfrozen (it was held at 1.16.30 since 21 Oct) - everything from 1.16.31 to 1.17.8 comes with it.
+
+Simulator (Firmware sim, scenario v1178_msg - over READY, over the menu, held, MSG?, Settings > Messages):
+  cave 231 scenarios, cavec 231, sap5xc 231, sap5x 231: the same results as 1.17.7 apart from v1178_msg (13/13 on each);
+  cavec v11657_spam's long-standing "sent N transfers too early" note moved by one transfer (timing). ASan/UBSan clean
+  (cavec: v1178_msg, settings_persist, v11688_settings). The colour page's keeping on the 2 MB chip can't run in the
+  simulator (no chip there: it draws the page again instead) - CHECK IT ON THE UNIT.
+
+Real builds: cave 638,112 B (78 %), RAM 64 %; cavec 790,028 B (97 %), RAM 87 %; sap5xc 774,812 B (95 %), RAM 86 %;
+  sap5x 564,760 B (69 %). 0 unaligned literal loads.
+
+Test it (your unit, before the fleet):
+  1. Flash it. In the phone app (Android 1.7): a survey > 📡 > connect > 💬, send "Test message one" to the unit.
+  2. On READY: the chime, the page dimmed, the box in the middle. Press SHOT: gone, READY as it was, no shot taken.
+     The phone's bubble: ✓ sent, ✓✓ on screen, Read.
+  3. Open the menu and send another: it pops up over the menu; MENU puts it away and you're still in the menu.
+  4. Colour unit: the page after the box must be the colour page exactly as it was (this is the 2 MB chip path).
+  5. Take a shot and send one while it measures: it waits, then shows when the result is up.
+  6. Settings > Messages: both listed, newest first; pick one: the same box.
+  7. Restart the unit: Settings > Messages still has them.
+
+
+Tacheo firmware 1.17.4 - sap5xc (Phil's SAP5 board with a XIAO and the colour screen) - 10 Nov 2026.
+
+WHAT AND WHY
+Sully, 10 Nov 2026, for a full Topside release (Windows + Mac): "Rebuild both from trunk". The sap5xc on Drive (1.16.93) and
+on the PC (1.16.98) both CRASH ON EVERY FRONT SHOT'S RESULT PAGE (the FRONT literal read from an odd address - Paul's
+1-button crash). 1.17.4 is the trunk as the colour Tacheo 1's cavec 1.17.4 (tried as 1.17.2 on TCH-260004).
+
+WHAT CHANGES FROM 1.16.98
+- THE FRONT SHOT CRASH FIXED (the literal copied through a helper; every build is now checked for the pattern).
+- FPU interrupt off again; a crash or freeze record survives the restart.
+- The laser dot is off at every switch-on: the first tap lights it, the next starts the countdown.
+- Cross sections are always drawn closed. Iron Invaders' saucer is off the main menu's tab rail.
+- Three Cavway start-up messages (BEAT MY PRICE, CAVWAY / ...THEN ADD AN LCD.; CAVWAY CALLED. / IT WANTS MY SCREEN.;
+  SORRY, CAVWAY. / MORE MAP, LESS CASH.).
+- Unchanged: switched off it stays in the parked standby (fully off only when nearly flat), as since 1.16.x on the sap5x.
+
+TEST FOR SULLY (TCH-260003 / TCH-260007)
+Switch on: READY with the dot off; tap = dot; tap = countdown; take several FRONT shots (no restart); shoot a cross section
+with a gap (it closes); send a report.
+
+SIMULATOR (trunk sim, 227 scenarios, sap5xc build): every scenario gives 1.16.98's results except sap5xc_anim_echo's
+message count (53 now: the Cavway messages - the test updated). Build 765,820 B (94 %); no unaligned literal loads.
+
+
+released 2026-11-09 (on Sully's PC only - not on Google Drive)
+Tacheo firmware 1.16.98 (Tacheo 1 colour screen = cavec, Tacheo 1 OLED = cave, SAP5 with the colour screen = sap5xc)
+- READY: the laser dot is always lit (Sully, 9 Nov 2026: "When on ready, always have the laser on. Whenever a user wants the laser off,
+  he can take a shot and keep it on the data screen."). No minute's time-out on READY, no laser switch-off with it, and the dot is lit
+  as soon as READY shows after switching on. It still goes out on the data screen (a shot's result), in the menus and in standby.
+- Standby: Nordic's fix for the FPU interrupt (nRF52840 errata 87, DevZone 12433). Ordinary float maths sets FPSCR's flags, which pend
+  the FPU interrupt (IRQ 38), and a pending interrupt stops the processor sleeping (TCH-260004 on 1.16.96: 89.7 % awake in standby,
+  IRQ 38 pending). The FPU interrupt is now enabled at the lowest priority and its handler clears the FPSCR saved on the stack, which
+  FreeRTOS restores - clearing it before each sleep alone (1.16.97) can be undone by a task switch.
+- The QSPI interrupt (IRQ 41) is cleared when the logs' flash is closed and while parked (DevZone 55476).
+- DIAG SLEEPIRQ: FPU interrupts handled, FPU / QSPI pendings cleared in standby, the interrupts seen pending in two standby looks in a
+  row (stuck), all seen, and those pending now.
+- cavec keeps 1.16.97's loggers (STBYLOG, OFFCRUMB, OFFPINS2, Device > Fully-off test) and quiet park. cave and sap5xc get the shared
+  code since their last versions (cave 1.16.95, sap5xc 1.16.93: 1.16.95's laser kept powered for compass reads).
+Test: READY left 2 minutes - the dot stays lit; a shot - the data screen, dot off; a press - READY, dot lit at once. Standby 1-2 days
+unplugged, then a Topside report: STBYLOG awake % a few % (cavec), SLEEPIRQ stuck=00000000/00000000.
+
+
+released 2026-11-04
+# 4 Nov 2026: SAP5 with a XIAO and the colour screen (sap5xc). Everything in 1.16.92, plus (Sully: "fix all issues", after Paul's reports):
+- FIXED: a calibration that "failed to save" (Paul's colour T1, TCH-A70CD4C0: a Normal calibration finished at 0.17 and was gone after the next restart; the same unit had lost its serial number on 28 Oct). The unit's internal storage had stopped taking writes, so the new calibration lived in memory only. Now a save that fails repairs the storage on the spot - wipes it and writes back everything in memory (settings with the new calibration, serial number, owner, Options, QC, screen settings, history, backsight pairs) - and saves again. Once a power-on.
+- NEW: a storage check at every switch-on from cold: a small write read back. Storage that takes no writes is repaired before anything else is saved to it.
+- What a repair loses: the saved calibration holds and calibration records from before (the calibration itself is kept). The 2 MB chip (logs, animations, fonts) isn't touched. The trip log gets an F record; Topside 1.6.55 shows it ("The internal storage repaired itself"). DIAG adds FSHEAL repairs=N.
+- SERIAL= / SERIAL!= from Topside repairs the storage and tries again if its write fails.
+- AFTER INSTALLING on a unit that showed "Axes are not set" or lost its calibration: Factory > Axes (level, laser to north; then laser straight up), then Normal > All sensors outdoors.
+- Built 4 Nov 2026. Simulator: the full scenario list on the sap5xc build, the same results as 1.16.92. The repair itself runs only on the hardware (the simulator has no flash). Not tried on a unit yet.
+- Install: plugged in and running, Topside offers it (Updates and Upgrades > Tacheo). Or copy Tacheo_v1.16.93_sap5xc.uf2 onto the XIAO's drive (reset button twice quickly).

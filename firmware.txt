@@ -1,0 +1,29 @@
+# Tacheo firmware - the list Topside 1.6.108 and newer read (Windows, Mac and the Microsoft Store copy), and the phone app.
+# Topside downloads a package when it is newer than every one it has for that build, checks size and md5, and keeps it in
+# "Firmware downloads". To release new firmware: put <file> and <file>.txt (notes; first line "released yyyy-mm-dd ...") in
+# firmware/, then replace that build's block here (one block per build, a blank line between). Only addresses in this
+# repository are accepted. Keep this file's name and the key: value lines as they are.
+
+file: Tacheo_v1.17.9_cave.zip
+size: 640719
+md5: 8091edf0f6a5acad9a50950128a84605
+url: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.9_cave.zip
+notes: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.9_cave.zip.txt
+
+file: Tacheo_v1.17.9_cavec.zip
+size: 792379
+md5: 17fd048d6af88aca3759484ccec8f6aa
+url: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.9_cavec.zip
+notes: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.9_cavec.zip.txt
+
+file: Tacheo_v1.17.8_sap5xc.zip
+size: 775851
+md5: 6a658f0f05699eda0c6465d3c3e07c96
+url: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.8_sap5xc.zip
+notes: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.8_sap5xc.zip.txt
+
+file: Tacheo_v1.16.30.5_sap6.zip
+size: 477927
+md5: 651da51c355d65ca39988166fd834cc4
+url: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.16.30.5_sap6.zip
+notes: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.16.30.5_sap6.zip.txt

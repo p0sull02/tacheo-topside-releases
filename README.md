@@ -22,3 +22,10 @@ The program's source code is not here.
 ## Licence
 
 Copyright (C) 2026 Phillip M. Sullivan. All rights reserved. Please share the link to this page rather than the files themselves.
+
+## Unit firmware (Topside 1.6.108 and newer)
+
+`firmware.txt` lists the current Tacheo and SAP6 firmware packages in `firmware/`. Topside reads it when it starts and when a
+unit is connected, downloads anything newer for that unit's build (size and MD5 checked), and offers it on a bar at the top of
+the window. New firmware no longer needs a new Topside.
+

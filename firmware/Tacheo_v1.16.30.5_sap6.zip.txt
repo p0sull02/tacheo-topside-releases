@@ -1,0 +1,111 @@
+released 2026-11-16 (Topside 1.6.105, Windows + Mac; Sully: "ship all updates fleetwide. All devices, all programs.")
+Tacheo on the SAP6, the 1.16.30 line: 1.16.30.5 - 16 Nov 2026 - released fleetwide on Sully's word (not yet tried on a SAP6)
+=======================================================================================
+
+What (Sully, 16 Nov 2026): the same as the trunk's 1.17.8 - "Have the message pop up on the tacheo during whatever screen
+the surveyor is currently on." / "this will be for all devices: sap5, sap6, sap5xc, T1 and T2." / "Do a smaller than full
+screen, like a popup message," / "slightly dim the background around the message, and the message appears in a box in the
+middle" / "In settings, if you can, have a way to retrieve previous messages sent to the Tacheo."
+
+  Messages from the Topside phone app: MSG= / MSG+= / MSGGO=<id> / MSG? over Bluetooth (or USB). The message pops up over
+  whatever page is showing, with a chime: the page dimmed (every other dot) and the message in a box in the middle. Any
+  button puts it away (that press does nothing else); the page comes back as it was. It waits while a shot is measured or a
+  calibration hold is taken, and in standby. MSG SHOWN / MSG READ go back to the phone. Settings > Messages (the row after
+  Advanced >): the last 10, newest first; /msglog.bin over a restart.
+
+How: the trunk's 1.17.8 code made for this line (no tap-countdown, cross sections, colour pages or uiGuarding here); the rest
+  of 1.16.30.4 untouched. Settings is 9 rows now: Units, Style, Screen, Autoflip, Bright, Timeout, Advanced >, Messages >, Back.
+
+Simulator (Firmware sim\SAP6 1.16.30 line, new scenario v116305_msg; settings_persist walks past the new row): all 146
+  scenarios the same as 1.16.30.4, v116305_msg 13/13.
+
+Real build: 476,888 B (58 %), RAM 48 %. 0 unaligned literal loads.
+
+Test it on your SAP6: as the Tacheo notes (READY, the menu, a shot, Settings > Messages, a restart).
+
+
+released 2026-11-13 (Topside 1.6.64, Windows + Mac)
+Tacheo firmware 1.16.30.4 - SAP6 (Phil's SAP6 running Tacheo, the frozen 1.16.30 line) - 10 Nov 2026.
+
+WHAT AND WHY
+Sully, 10 Nov 2026: "Can you simplify the menus on the sap6?" ... "And get the battery fix put in too".
+1.16.30.3 (the battery fix: stays in the parked standby, FPU interrupt off, crash record kept) plus the menus regrouped.
+
+THE NEW MENUS
+Main: Survey >, Tools >, Calibrate >, Bluetooth >, Settings >, Device >, Turn off.
+- Survey: Recall, Shot, At, Series, Side lead, End survey, Leg track. Hold MENU at READY still opens it on Shot.
+- Tools: Sketch, Field meter, Strike & dip, Point-to-point, Live tape. Rigging and Elevation are gone from the menu.
+- Calibrate: Normal >, Precision >, Check, Quick fix, Benchmark, Factory >.
+- Bluetooth (was Pairing): Phone, XTalk, Role, Find partner, Compare cal, Other instr., Detect, Long range.
+- Settings: Units, Style, Screen, Autoflip, Bright, Timeout, Advanced >.
+  Advanced: LRUD ref, Max leg, Low batt, Shot hold, Quality ctrl >. (Settings > Bluetooth is gone: Bluetooth > Phone is the same switch.)
+- Device (was Info): Battery, Cal health, Cal history, About, Tutorial >, Live angles, Raw sensors, Bluetooth update, Drain test.
+Messages and tutorial pages name the new places (Device > Cal health, Bluetooth > Phone On, Survey > Leg track,
+Settings > Advanced > Quality ctrl). Nothing else changes: shots, calibration, CrossTalk, Bluetooth, the saved settings.
+
+TEST FOR SULLY (his SAP6)
+Update, then walk every menu once. The battery test from 1.16.30.3 still stands: charge, unplug, switch off, leave 1-2 days,
+double-click (READY at once), send a report.
+
+SIMULATOR (SAP6 1.16.30 line, 145 scenarios, against 1.16.30.3)
+Every scenario's menu walk moved to the new rows; all give 1.16.30.3's results. The Rigging checks are retired (out of the
+menu), the Elevation page checks replaced by "no Elevation in Tools, legs still counted". Memory checker clean on the menu scenarios.
+
+BUILD: 473,096 B flash (58 %), no unaligned literal loads.
+
+
+superseded 2026-11-10 by 1.16.30.4 (same battery fix + the new menus) - 1.16.30.3 was never tried on a SAP6:
+Tacheo firmware 1.16.30.3 - SAP6 (Phil's SAP6 running Tacheo, the frozen 1.16.30 line) - 10 Nov 2026. On Sully's PC only, NOT on Google Drive.
+
+WHAT AND WHY
+Sully, 10 Nov 2026: "make sure the sap6 gets the battery update. It did seem to work on the tacheo."
+TCH-260004 (Tacheo 1, colour) lost 6-10 mV an hour while fully off (System OFF) and held 0.6-0.9 mV an hour for 20 h in the
+parked standby. Fully off was the drain, not the standby. Phil's own SAP6 firmware never went fully off either.
+
+HOW (built on 1.16.30.2)
+1. STAY IN STANDBY. Switched off, the SAP6 parks (as since 1.16.30.1: log flash asleep, buses and clocks off) and stays
+   there - it no longer goes fully off 2 h later. A double-click wakes it straight to READY on the same station.
+   Fully off only when the cell is nearly flat (under 3.45 V), to protect it; plugged in after that and unplugged, it
+   goes back to standby, not fully off. The battery is still read every 30 s while off.
+2. FPU INTERRUPT OFF AGAIN. 1.16.30.2 turned it on; it did nothing for the drain, and its handler could write to stale
+   stack memory (the same handler crashed the Tacheo 1 on 1.16.98 / 1.17.0). The FPU flags and pending bit are still
+   cleared at the park.
+3. CRASH RECORD SURVIVES THE RESTART. It sat in the stack the board core paints at every start, so no crash or freeze
+   ever kept its address. Now the top 64 bytes of the heap. CRASHTEST! over USB proves it.
+
+TEST FOR SULLY (his SAP6)
+Charge, unplug, switch off. Leave it 1-2 days. Double-click: READY at once (no cold start). Plug into Topside, send a report:
+the trip log's R record should show the hours in standby and only a few mV lost.
+
+SIMULATOR (SAP6 1.16.30 line, 145 scenarios, against 1.16.30.2 from the same sim)
+- All 144 existing scenarios identical to 1.16.30.2 (the simulator keeps its old fully-off-at-2-h rule for them).
+- New v116303_stay, 5/5: parked at 4.00 V; still parked, never fully off at 3 h and 11 h; a double-click is READY at once;
+  nearly flat (3.40 V) = fully off after the 2 h.
+
+BUILD: 478,504 B flash (59 %).
+
+
+released 2026-11-09 (on Sully's PC only, never tried on a SAP6; superseded by 1.16.30.3 - its FPU interrupt is off again)
+# 9 Nov 2026: the SAP6 (Phil's SAP6 running Tacheo). Sully: "go ahead with ... building and staging, updates for the 5xc, and sap6". 1.16.30.1 plus only the drain research's two sleep fixes (source: Breadboard\Sketches\Tacheo SAP6 (1.16.30 line)).
+# On Sully's PC only until a SAP6 has tried it: make_release_zip.py HOLDs this zip and .txt, and 1.16.30.1 stays in firmware\ as the released one. When it's good: out of HOLD, 1.16.30.1 into firmware\older\, the manifest's sap6 line 1.16.30.2.
+- FIX (standby drain): a floating-point flag left by almost any sum keeps the chip's FPU interrupt pending, and a pending interrupt stops the processor sleeping (nRF52840 errata 87). The colour Tacheo 1's standby showed exactly that: the processor awake 89.7 % of the time with the FPU interrupt pending. The FPU interrupt now runs and clears the flags where the interrupted code keeps them (Nordic's fix that holds under FreeRTOS); the flags and the FPU and QSPI pending bits are also cleared when the standby parks and before going fully off.
+- Diagnosis report: SBPARK adds pend= (interrupts pending at the park), seen= (any noticed while parked) and fpu= (how often the FPU interrupt ran).
+- Nothing else changes: menus, shots, calibration, CrossTalk, Bluetooth are 1.16.30's.
+- Built 9 Nov 2026 (478,244 B, 58 % of flash; +368 B). In the SAP6 1.16.30 firmware simulator all 144 scenarios give the same results as 1.16.30.1 (the standby park and Drain test scenarios pass; SBPARK shows the new fields). The interrupt itself only runs on a unit. Not yet tried on a SAP6.
+
+
+released 2026-11-02
+# 2 Nov 2026: the SAP6 (Phil's SAP6 running Tacheo). Sully: "add the fix to Sap6 as well". The SAP6 stays on 1.16.30's features: this is 1.16.30 with only the battery-drain fix added (source: Breadboard\Sketches\Tacheo SAP6 (1.16.30 line)).
+# On Sully's PC only until he has tried it on a SAP6: make_release_zip.py HOLDs this zip and .txt out of every Topside release, and 1.16.30 stays in firmware\ as the released one. When he says it's good: out of HOLD, 1.16.30 into firmware\older\, the manifest's sap6 line updated.
+- FIX (the battery drain while off - Paul's SAP6 arrived flat after a full charge; Sully's meter on a colour Tacheo 1, the same XIAO chip and log flash, showed about 13 mA in standby, about 0.15 mA with this fix): switched off and unplugged for 2 s, the SAP6 now closes its log flash chip (file system, flash interface, the chip asleep) and switches off every serial, SPI, I2C, ADC, PWM, microphone and sound block still on - on the SAP6 the tilt sensor's own bus was left on - and lets the fast clock go. Plugging in, the double-click and going fully off (2 h into standby, as before) set them back first; no trip-log record is lost.
+- FIX: going fully off, every pin left as a plain input has its input buffer switched off and the pin latches are cleared (Phil's firmware sleeps with every pin reset).
+- NEW: Info > Drain test (after Bluetooth update), for a meter in the battery lead with USB unplugged: the unit switches off and holds five states for 15 s each, beeping the step's number first (1 beep, 2 beeps ...) - read the meter after the beeps. 1 standby as 1.16.30 ran it; 2 the log flash closed; 3 every block off (this version's standby); 4 the plain inputs let go (as fully off now does); 5 the other output pins let go (not the buttons, the 3.3 V rail and laser switches or the piezo). Then 6 beeps and fully off: a double-click wakes it. A Diagnosis report afterwards carries the steps (DRAINTEST) and the standby's park counts (SBPARK).
+- Version 1.16.30.1 = 1.16.30 plus this fix (1.16.31 - 1.16.87 are the Tacheo builds' numbers).
+- Built 2 Nov 2026 (58 % of flash). Built first without the fix, the 1.16.30 source gave the released 1.16.30 package byte for byte (but its build date). Checked in the 1.16.30 firmware simulator: two new scenarios (the standby park - off USB, USB in and out, the double-click, fully off after 2 h, no trip-log record lost - and the Drain test); every other scenario gives the same results as 1.16.30. The parts that switch the chip's blocks off only run on a unit; the same code cut the colour Tacheo 1's standby on Sully's meter. Not yet tried on a SAP6.
+
+1.16.30 (Quality control and GOLD):
+- GOLD: a calibration whose figure reads 0.10 or less ends on a GOLD page (two stars) with its own fanfare instead of EXCELLENT's chime.
+- Settings > Tolerances is now Settings > Quality control. Every check is On by default and each can be changed: QC checks (all the warnings at once), Role check, XTalk angle, BS detect, BS within, Dist tol, FSx3 detect / within, LRUD check / good / down, Loop check, Loop warn (closed within 0.5 to 3 ft; 1 ft as before), Defaults.
+- Role check (Crosstalk with a role set): a shot back along the unit's own last shot warns BS ON FS UNIT on the FS unit or FS ON BS UNIT on the BS unit, with the warning beep; a pair whose two shots point the same way shows SAME WAY: FS+FS?.
+- BS detect Off: every long shot is a front shot (front-sight-only surveys, where a passage that doubles back must not be taken for a backsight). QC checks Off silences the warnings only; BS and FSx3 detect keep their own setting.
+- Over USB / Bluetooth: SET=qc and SET=qcloop; INFO shows qc= and qcloop=.
