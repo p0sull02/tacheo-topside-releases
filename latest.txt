@@ -2,13 +2,13 @@
 # a newer Topside is out. Keep the name and the "key: value" lines as they are. url: the zip on this repository's Releases page.
 # tacheo / sap6 / sap5 / cave / cavec / sap5xc: the unit firmware inside that Topside. Notes may start with a tag:
 # [Topside] [Tacheo] [SAP6] [SAP5] (untagged = Topside).
-version: 1.6.106
+version: 1.6.107
 date: 2026-11-17
-file: Tacheo-Topside-1.6.106-Windows.zip
+file: Tacheo-Topside-1.6.107-Windows.zip
 id: github
-url: https://github.com/p0sull02/tacheo-topside-releases/releases/download/v1.6.106/Tacheo-Topside-1.6.106-Windows.zip
-size: 15600041
-md5: a8fc91532a8e14ee571cc09ca7ed351a
+url: https://github.com/p0sull02/tacheo-topside-releases/releases/download/v1.6.107/Tacheo-Topside-1.6.107-Windows.zip
+size: 15571625
+md5: a529af40b94c37f97680ada1d9a60181
 tacheo: 1.16.73
 sap6: 1.16.30.5
 cave: 1.17.9
@@ -16,6 +16,7 @@ cavec: 1.17.9
 sap5xc: 1.17.8
 sap5: 2.2.16
 notes:
+- [Topside] 1.6.107: 1.6.106 closed as soon as it opened on Windows, so its update put 1.6.105 back. 1.6.107 is the same Topside and firmware, built correctly.
 - [Tacheo] 1.17.9 (Tacheo 1, OLED and colour screen): CrossTalk no longer gets stuck on "Waiting:" with both units saying yes. A connection the radio refused left the connecting unit deaf until it was switched off; now it listens again at once, a connection that hasn't gone through in 6 s is tried again, and two units on 1.17.9 link whichever one connects. Put it on both units.
 - [Topside] 1.6.106: carries Tacheo firmware 1.17.9; Topside itself as 1.6.105.
 - [Topside] 1.6.105: CartoTable projects are one file (.ctproj): the survey data, sketch scans and your Illustrator and PDF map drafts in it - File > Share Project writes that one file to hand to someone, and .ctproj files have their own icon and open with a double-click (Topside is also in Open with for Walls, Compass, Survex and Therion files). Declination is worked out for every trip from its date, with the most precise model: IGRF-14 plus NOAA's WMMHR2025 crustal field, the local magnetism of the rocks that IGRF and WMM leave out (about half a degree at Mammoth Cave). No GPS for an entrance? Place on the map > Find it on a map: type a town, then click the entrance on the lidar hillshade; Look it up fills the elevation (USGS 3DEP lidar in the US). Opening a big cave can be cancelled. Also since 1.6.91: drafted PDF / Illustrator maps line up under the line plot by themselves, a heat map of the ground, much faster opening of big caves, Publish to web, Phone link to the Topside phone app, and updates now come from GitHub.
