@@ -2,13 +2,13 @@
 # a newer Topside is out. Keep the name and the "key: value" lines as they are. url: the zip on this repository's Releases page.
 # tacheo / sap6 / sap5 / cave / cavec / sap5xc: the unit firmware inside that Topside. Notes may start with a tag:
 # [Topside] [Tacheo] [SAP6] [SAP5] (untagged = Topside).
-version: 1.6.108
-date: 2026-11-17
-file: Tacheo-Topside-1.6.108-Windows.zip
+version: 1.6.109
+date: 2026-11-18
+file: Tacheo-Topside-1.6.109-Windows.zip
 id: github
-url: https://github.com/p0sull02/tacheo-topside-releases/releases/download/v1.6.108/Tacheo-Topside-1.6.108-Windows.zip
-size: 15637466
-md5: a7802728d099ba486258503ba8583a12
+url: https://github.com/p0sull02/tacheo-topside-releases/releases/download/v1.6.109/Tacheo-Topside-1.6.109-Windows.zip
+size: 16108944
+md5: eda3b13a0a9e77028f94ade83d8e8019
 tacheo: 1.16.73
 sap6: 1.16.30.5
 cave: 1.17.9
@@ -16,6 +16,7 @@ cavec: 1.17.9
 sap5xc: 1.17.8
 sap5: 2.2.16
 notes:
+- [Topside] 1.6.109: CartoTable reads your field book - scans or phone photos of the CRF green data form (shots and left/right/ceiling/floor) are checked against your survey files. The Data clinic is its own window: findings filed by type, each beside its book row and survey line, corrections shown before they are made (one at a time or all), calibrations applied, any finding opens its survey file. Do everything on Home sorts the trips and scans, compiles and runs Reckon, checks the books, scans for errors and makes a summary PDF, each step animated. Projects with several caves get a chip per cave. Leads written in the book, shots in its notes and writing on sketches show in the clinic; ;Lead comments are on the Leads page. Unit firmware unchanged.
 - [Topside] 1.6.108: new Tacheo and SAP6 firmware now comes straight from the internet. When Topside starts, and when a unit is plugged in or connected, it downloads anything newer for your units, and a bar at the top says "New firmware for TCH-..." with Update it - no new Topside needed for new firmware. The phone page (Phone link) has the phone app's online maps and the sketch and data scanner.
 - [Topside] 1.6.107: 1.6.106 closed as soon as it opened on Windows, so its update put 1.6.105 back. 1.6.107 is the same Topside and firmware, built correctly.
 - [Tacheo] 1.17.9 (Tacheo 1, OLED and colour screen): CrossTalk no longer gets stuck on "Waiting:" with both units saying yes. A connection the radio refused left the connecting unit deaf until it was switched off; now it listens again at once, a connection that hasn't gone through in 6 s is tried again, and two units on 1.17.9 link whichever one connects. Put it on both units.

@@ -1,0 +1,20 @@
+name: make-release
+on:
+  push:
+    branches: ['upload-*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create the release from upload/
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ver="${GITHUB_REF_NAME#upload-}"
+          zip=$(ls upload/*.zip | head -1)
+          md5sum "$zip"; sha256sum "$zip"
+          gh release create "v$ver" "$zip" --repo "$GITHUB_REPOSITORY" --target main --title "Tacheo Topside $ver" --notes-file upload/notes.md --latest
+          gh release view "v$ver" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[] | [.name, .size] | @tsv'
