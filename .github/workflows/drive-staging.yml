@@ -1,0 +1,18 @@
+name: drive-staging
+# A drive-<ver> branch carries the Mac/Windows zips just long enough for the
+# Google Drive page to fetch them from raw.githubusercontent.com; it removes itself.
+on:
+  push:
+    branches: ['drive-*']
+permissions:
+  contents: write
+jobs:
+  expire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 200
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+      - run: ls -l drive/ || true; sleep 10200
+      - if: always()
+        run: git push origin --delete "$GITHUB_REF_NAME" || true
