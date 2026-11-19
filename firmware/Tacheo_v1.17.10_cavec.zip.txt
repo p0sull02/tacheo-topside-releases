@@ -1,3 +1,43 @@
+released 2026-11-18 (firmware channel on GitHub, no new Topside: Topside 1.6.108+ offers it; Sully: "Push out the update to GitHub or drive when ready.")
+Tacheo firmware 1.17.10 (cave = Tacheo 1 OLED, cavec = Tacheo 1 colour) - 18 Nov 2026 - CrossTalk with a phone or tablet on
+================================================================================================================
+
+What (Sully, 18 Nov 2026, Paul's two T1s on 1.17.9 still not linking):
+  "Could it be one is already connected to his phone?" / "during digital sketching the devices wouldn't cross talk when
+  connected to the tablet" / "They should be able to connect to phone and other Tacheos and devices" / "Have a data receive
+  page on the phone app too ... That means the Tacheos are connected to each other, and the app."
+
+  Paul's reports (18 Nov, both 1.17.9, the whole day since the 07:27 install): the 1-button dialled the 2-button 8 times and
+  every dial was given up after 6 s (XLINK dial=8 stuck=8 refused=0); the 2-button never dialled (dial=0) and had the
+  1-button on its "said no" list (XTALK declined=1, mode=0).
+
+FIX (nothing to set, either unit):
+  - A unit with a phone or tablet linked stays visible to its partner. Bluefruit puts advertising back after a disconnect
+    only when NOTHING is left connected, and the refusals (a Tacheo asking by connecting, a stranger) returned before
+    putting it back: with an app on, one brief connection from another Tacheo left the unit invisible until the app let go,
+    so the partner's dials went nowhere ("Waiting:"), and a CrossTalk link that dropped never came back ("Lost:"). Now
+    advertising is put back after every connection and disconnect while a slot is free, and checked once a second.
+  - Two apps at once (the Topside phone app and SexyTopo / TopoDroid on a tablet): every shot goes to every app (was: the
+    newest app only), and the console's answers go back to the app that asked (Bluefruit sent them to the newest link,
+    which could be the partner). READY shows BT2 with two apps.
+  - A unit whose two link slots are both taken by apps dials its partner itself, whichever address is lower (a 1.17.9+
+    partner takes the link either way round).
+  - A partner that takes our dial and drops it at once (it said no, or ended CrossTalk this power-on) is counted
+    (DIAG XLINK peerdrop=), we listen again at once (1.17.9 counted it as a stuck dial after 6 s), and after 3 in a row
+    READY says "<partner> isn't accepting. Pair now on it too." and dials every 30 s.
+  - The unit that said no is asked again about a unit still asking by connecting 2 min later (was: never, until switched
+    off). A No still holds for 2 min.
+  - Every advert and scan response is the same 31 bytes (padded with zeros): this Bluefruit keeps the length of the first
+    advert it ever sent, so a longer one later was cut short.
+  - For the phone app's CrossTalk page: each CrossTalk pair's verdict goes to every app ("XCHK AGREE|CHECK dA dI dD seq"),
+    and LINKS? answers how many apps are linked, whether the partner is linked, its signal and this unit's role.
+  - DIAG RADIO adds apps= periph= adv= advup= advfail= appups=.
+
+Tested: the simulator's mock now behaves as the real Bluefruit (advertising restarts by itself only with no link left, no
+advert with both slots taken, nothing connects to a unit that isn't advertising). New scenarios v11710_tablet_dark,
+v11710_two_apps, v11710_slots_dial, v11710_peer_drop, v11710_decline_cool. NOT tried on a unit (Sully's word).
+
+
 released 2026-11-17 (Topside 1.6.106, Windows + Mac; Sully: "right now only paul has 2 T1s. So go ahead and push out a fleetwide update without testing on a device first.")
 Tacheo firmware 1.17.9 (cave = Tacheo 1 OLED, cavec = Tacheo 1 colour) - 17 Nov 2026 - CrossTalk can't stall on "Waiting:"
 ================================================================================================================
