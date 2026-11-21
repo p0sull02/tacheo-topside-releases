@@ -4,26 +4,26 @@
 # firmware/, then replace that build's block here (one block per build, a blank line between). Only addresses in this
 # repository are accepted. Keep this file's name and the key: value lines as they are.
 
-file: Tacheo_v1.17.11_cave.zip
-size: 644095
-md5: 95b242dbbb7b821dd8fd153acd55d1f5
-url: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.11_cave.zip
-notes: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.11_cave.zip.txt
+file: Tacheo_v1.17.12_cave.zip
+size: 644174
+md5: f798c630829feb1fc90f7da0163547c9
+url: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.12_cave.zip
+notes: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.12_cave.zip.txt
 
-file: Tacheo_v1.17.11_cavec.zip
-size: 797107
-md5: da1bc322e6b6ede61e5965d0deaed1cb
-url: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.11_cavec.zip
-notes: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.11_cavec.zip.txt
+file: Tacheo_v1.17.12_cavec.zip
+size: 797203
+md5: 87873233c9ba8330721c08e5f06130a4
+url: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.12_cavec.zip
+notes: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.12_cavec.zip.txt
 
-file: Tacheo_v1.17.11_sap5xc.zip
-size: 780667
-md5: 7b2a3cd10bea5cfcb93e878003719bed
-url: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.11_sap5xc.zip
-notes: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.11_sap5xc.zip.txt
+file: Tacheo_v1.17.12_sap5xc.zip
+size: 780747
+md5: 8931b75a2e1c556e6d6275ec228c6bc9
+url: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.12_sap5xc.zip
+notes: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.12_sap5xc.zip.txt
 
-file: Tacheo_v1.16.30.5_sap6.zip
-size: 477927
-md5: 651da51c355d65ca39988166fd834cc4
-url: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.16.30.5_sap6.zip
-notes: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.16.30.5_sap6.zip.txt
+file: Tacheo_v1.17.12_sap6.zip
+size: 552315
+md5: fafbab2b137d7370e6bbf17a1b870fe4
+url: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.12_sap6.zip
+notes: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.12_sap6.zip.txt
