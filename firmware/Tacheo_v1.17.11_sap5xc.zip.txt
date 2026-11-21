@@ -1,5 +1,53 @@
-released 2026-11-16 (Topside 1.6.105, Windows + Mac; Sully: "ship all updates fleetwide. All devices, all programs.")
-Tacheo firmware 1.17.8 (cave = Tacheo 1, cavec = Tacheo 2 colour, sap5x, sap5xc) - 16 Nov 2026 - tried on TCH-260004 (cavec, messages end to end) and released fleetwide on Sully's word
+released 2026-11-20 (firmware channel on GitHub, no new Topside: Topside 1.6.108+ offers it; Sully tried it on a unit: "I've tried it, ship it")
+Tacheo firmware 1.17.11 - "OPEN" command: the phone opens Cross section on the unit
+=====================================================================================
+Built 19 Nov 2026 01:28 PT for cavec (T1 / v1 cave unit with the colour screen), cave (T1 OLED) and sap5xc.
+Tried by Sully on a unit; released 20 Nov 2026.
+
+WHAT AND WHY
+Sully (19 Nov 2026): "When you tap 'cross section' button, the selected Tacheo will automatically switch the the
+cross section function in the surveyors hands. Think Command and Control - the app can control the device. No words
+have to be spoken, when the surveyor sees the cross section function open, they know to immediately take a cross
+section there."
+
+HOW
+New console / Bluetooth commands (the phone app's Tacheo page sends them; USB works too):
+  OPEN=xs      opens Tools > Cross section. At READY or a result: at once, with the message chime (so the surveyor
+               looks down), then the aim page. Inside a menu or another tool (Sketch, Lineplot, Stations...): the unit
+               backs out first, as a long MENU press would, then opens it. Already open: OK, nothing to do.
+               Reply "OK OPEN xs". Refused "OPEN BUSY" during a shot or calibration hold, a running sweep, a countdown
+               or standby - the phone shows that and the surveyor is asked by voice as before.
+  OPEN=ready   leaves any tool or menu for READY. Reply "OK OPEN ready".
+  OPEN?        "OPEN ready" / "OPEN result" / "OPEN xs" / "OPEN xs sweeping" / "OPEN page" / "OPEN busy" / "OPEN standby".
+  anything else: "OPEN BAD (xs or ready)".
+Serial line "open,xs,phone" and a usage-log mark (T 7) when the tool is opened this way.
+Code: btWantXs / btWantReady flags set in handleCommand; checked in loop() at READY/RESULT (opens xsTool), in the
+two-button menu state (closeMenu), and in waitButton / waitButtonReady (return -1 with leaveMenu, as a long MENU).
+xsToolOpen flag set/cleared by xsTool() for OPEN? and the already-open case. Everything else as 1.17.10.
+
+THE TEST FOR SULLY
+1. Update a unit in Topside (Update a unit > the 1.17.11 package for its build).
+2. Phone app > Tacheo page > pick that unit > tap "Cross section". The unit should chime (two notes) and show the
+   Cross section aim page ("Point it along the passage, then start"). Take one as usual.
+3. Open the unit's menu, tap "Cross section" on the phone again: the menu closes and the aim page opens.
+4. Tap "Back to Ready" on the phone (OPEN=ready): the unit returns to READY.
+5. Start a shot hold and tap "Cross section" during it: the phone should say the unit is busy, nothing changes on the unit.
+
+SIM RESULTS (cloud container, Firmware sim of 19 Nov, all 243 scenarios, new sketch vs the 1.17.10 trunk sketch)
+  cavec : 2246 pass / 54 fail  - identical to 1.17.10 except v11711_open 13/13 PASS (new)
+  cave  : 1745 pass / 55 fail  - identical to 1.17.10 except v11711_open 16/16 PASS (new; the two-button menu case)
+  sap5xc: 2292 pass / 42 fail  - identical to 1.17.10 except v11711_open 13/13 PASS (new)
+  The 54/55/42 fails and 3 segfaults (corrupt_copy, migrate_v1, v1103_start_times) are the same lines on the 1.17.10
+  baseline in this container (simfs / renames on this filesystem) - not from this change.
+  Flash: cavec 98% (796068 of 811008 bytes), sap5xc 96%, cave 79%. cavec has ~15 kB left - the next feature on
+  cavec needs trimming somewhere.
+
+FILES
+  Tacheo_v1.17.11_cavec.zip / .uf2 / .elf     Tacheo_v1.17.11_cave.zip / .uf2 / .elf     Tacheo_v1.17.11_sap5xc.zip / .uf2 / .elf
+  src\  the sketch as built.   sim\sim.cpp, run_all.sh: + scenario v11711_open.
+
+
+Tacheo firmware 1.17.8 (cave = Tacheo 1, cavec = Tacheo 2 colour, sap5x, sap5xc) - 16 Nov 2026 - NOT YET TRIED ON A UNIT
 ================================================================================================================
 
 What (Sully, 16 Nov 2026):
