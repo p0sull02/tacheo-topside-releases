@@ -17,7 +17,7 @@ jobs:
           zip=$(ls upload/*.zip | head -1)
           md5sum "$zip"; sha256sum "$zip"
           if gh release view "v$ver" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then echo "v$ver is already out"; else
-            gh release create "v$ver" "$zip" --repo "$GITHUB_REPOSITORY" --target main --title "Tacheo Topside $ver" --notes-file upload/notes.md --latest; fi
+            gh release create "v$ver" "$zip" --repo "$GITHUB_REPOSITORY" --target main --title "Tacheo $ver" --notes-file upload/notes.md --latest; fi
           gh release view "v$ver" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[] | [.name, .size] | @tsv'
       - name: Remove the upload branch (the zip lives on the release)
         if: always()
