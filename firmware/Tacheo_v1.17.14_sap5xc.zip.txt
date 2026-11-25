@@ -1,8 +1,93 @@
-released 2026-11-20 (firmware channel on GitHub, no new Topside: Topside 1.6.108+ offers it; Sully tried it on a unit: "I've tried it, ship it")
+released 2026-11-24 (firmware channel on GitHub, no new Topside: Topside 1.6.108+ offers it; Sully ran it on TCH-260004: "Ran the Tacheo, you can update all units now")
+Tacheo firmware 1.17.14 - side leads from the phone, and an update mode that can always be finished
+=======================================================================
+For units coming from 1.17.11 this brings 1.17.12 - 1.17.14:
+- Side leads named from the phone app: station series may hold - and . (A25-B -> A25-B1), and the phone can start a side lead from any station.
+- A saved cross section tells the phone app.
+- Update mode now shows the XIAO-SENSE drive, so an update that stops partway can be finished by copying the file onto it (Tacheo 1.6.112+ does this itself).
+
+Tacheo firmware 1.17.14 (cave, cavec, sap5xc) - 23 Nov 2026
+
+What and why
+Sully, 23 Nov 17:01: "Can I currently control the stations on the phone app? Say I want to do a side lead, can I manually edit the next station designation to be A25-B1?"; 17:02: "Add that in, and have the Tacheo read the change and update as well."
+- The unit's series names were letters and digits only, so the phone could not tell it about a side lead named A25-B: STNAT=A25-B1 was refused (STN BAD STATION) and the phone only ever sent the series' letters.
+- There was no way to start a side lead from the phone; only the unit's own Stations > Side lead (series AA, AB ...).
+
+How
+- A series name may now hold - and . (not as its first character): A25-B gives stations A25-B1, A25-B2 ...; A25-B2.C works for a lead off the lead. Letters-and-digits names work as before. Up to 10 characters, as before.
+- New command STNLEAD=<from>,<series> (USB and Bluetooth, the same handler as STN? / STNSET / STNAT): the series is added if new, the unit is at <from> and its next leg runs <from> to <series>1, exactly as Stations > Side lead does on the unit (READY shows "At A25>A25-B"). A lead already surveyed keeps the station it left. A lead name ending in a digit is refused (A25 + 1 would read A251). Replies OK STN ... or STN BAD LEAD.
+- Back on the main line the phone sends STNAT=A25 as before.
+- The phone app (cartotable-app 5374c18, live) sends these: Data > Change > "Start a side lead from this station", or tap a station in the plan > "Start a side lead here"; "Back to the main line" restores the main series and its next number. With firmware older than 1.17.14 the phone still names every shot and says once that the unit needs 1.17.14.
+- Everything else as 1.17.13 (the UF2 update mode included). sap6 not rebuilt (its own sketch line).
+
+Sim (cavec): new scenario v11714_stnlead 17/17 pass (STNLEAD, legs A25-A25-B1, backsight, A25-B1-A25-B2, STNAT back to A25 -> A26, STNAT=A25-B2 picks the lead up again, a lead off the lead with a dot, bad names refused, kept on flash, LOG lines). The full suite old (1.17.13) vs new: identical on all 243 shared scenarios (2198 checks; the same 54 failures in both - not new).
+Size: cavec 796,676 of 811,008 bytes (98%), about 500 bytes more than 1.17.13.
+
+Test for Sully (bench, phone app + a unit on 1.17.14, Leg track On)
+1. Phone: open a survey, Data > Change > Start a side lead from this station (e.g. A25, series A25-B). The unit's READY should read "At A25>A25-B".
+2. Shoot a leg: phone and unit both call it A25 -> A25-B1; the next one A25-B1 -> A25-B2.
+3. Phone: Back to the main line (at A25). The unit should read "At A25"; the next leg A25 -> A26 on both.
+
+
+Tacheo firmware 1.17.13 (cave, cavec, sap5xc, sap6) - 22 Nov 2026 - NOT ON THE FIRMWARE CHANNEL (placed in Topside on Sully's PC to try first)
+
+What and why
+Sully, 22 Nov 08:27: "You need the change the code so something like this doesn't happen in the future. It's happened 2x times now."
+- Zach's colour T1 (TCH-260006): Topside 1.6.109's USB update to 1.17.10 on 19 Nov erased the old firmware (single bank: 796 KB doesn't fit twice), then stopped at about 88% with adafruit-nrfutil "Write timeout". No firmware to start. Its update mode was serial only (the 1200-baud touch -> enterSerialDfu, GPREGRET 0x4E): no XIAO-SENSE drive, and on battery that session ends only with the reset button or a flat battery (unplugging does nothing). Three more tries (21-22 Nov) got no answer from the stuck session, and the .uf2 had nowhere to go. The T1 colour's reset button can't be reached.
+- Sully's own unit died the same way over Bluetooth on 20 Nov.
+
+How
+- Update mode now shows the drive. The Seeed core's 1200-baud touch handler (TinyUSB_Port_EnterDFU in Adafruit_TinyUSB_nrf.cpp - not weak, so the sketch can't override it) now calls enterUf2Dfu (GPREGRET 0x57, the bootloader's UF2 mode) instead of enterSerialDfu. UF2 mode has the same serial port, so adafruit-nrfutil still works, plus the XIAO-SENSE drive. An update that stops part-way leaves the drive there, and the .uf2 can be copied onto it (Topside 1.6.112 does that by itself) - no reset button needed.
+- Done in the build: build_fw.sh patches the kit's core before compiling (every build from now on gets it). The sketch itself only has the version bump and this note. Checked in the cavec .elf: TinyUSB_Port_EnterDFU branches to enterUf2Dfu, which writes 0x57 to GPREGRET and resets.
+- Everything else as 1.17.12 (the version pulled from the channel on 20 Nov). 1.17.13 = 1.17.12 + this.
+
+Topside 1.6.112 (with it)
+- Installs through the update drive whenever update mode shows one (the .uf2 copied onto XIAO-SENSE, as dragging it by hand does).
+- A serial install that stops is finished through the drive when there is one.
+- adafruit-nrfutil's failures are caught as they happen (it exits 0 when it fails).
+- "Port in use" (Zach's 22 Nov "Access is denied" on COM4) and "update mode stopped answering" have their own messages; the old "safe in update mode: unplug it, plug it back in" is gone.
+
+The test for Sully (bench unit, USB)
+1. Topside 1.6.112: update the unit to 1.17.13. This first update still goes the old serial way (the unit's current firmware opens serial-only update mode). Expect it to finish as before.
+2. Then Updates > Rescue > Force update mode (or install 1.17.13 again). Expect the XIAO-SENSE drive to appear in Explorer within a few seconds, and the update log to say "Update drive ... copying the firmware there as a .uf2".
+3. Optional, the real proof: in update mode with the drive showing, start an install and pull the USB cable at about half way, plug it back in. The drive should come back (the unit has no firmware, so the bootloader stays with its drive); Install again finishes it.
+
+Sim: not run - the sketch's code is unchanged (version strings only); the change is in the USB core, which the simulator doesn't model.
+
+
+1.17.12 (20 Nov 2026) - cave, cavec, sap5xc, sap6. Built, NOT released (Topside on the PC only; firmware-test.txt for the phone's Test builds).
+
+What and why - Sully, 20 Nov 2026: "How about, whenever the tach takes a cross section, it sends it over via Bluetooth?" / "The app doesn't
+need to sent a prompt every 3s" / "And with this firmware update, I can test the Bluetooth update mode."
+  A cross section saved on the unit now sends one line, "XSEC new id=N", to every app linked over Bluetooth (the phone, and a tablet if one
+  is on the second slot). The phone fetches that one section (XSEC=N) and puts it in the live survey. Nothing is sent with no app linked,
+  and the phone no longer asks the unit anything to find out. Everything else as 1.17.11.
+
+How: xsSave() (the only place a section is saved - Tools > Cross section, Timer or Manual) ends with appsPrint("XSEC new id=N\r\n"),
+  the same unasked-line path the CrossTalk verdicts (XCHK) use since 1.17.10. 80 bytes of program.
+
+Test for Sully (Tacheo56EB, cavec, with the phone app 1.9 and the phone page that has Test builds):
+  1. Phone: Home > Update the Survey Device > tick Test builds at the bottom. Tacheo56EB should show "1.17.12 test build".
+     Tap Update to 1.17.12 (about 2 min, phone next to the unit). This is the Bluetooth update test.
+     If it stops part way: the unit waits in its update mode - plug it into Topside and update over USB (1.17.12 is in Topside's folder).
+  2. After it restarts: Survey > connect Tacheo56EB, start or open a survey.
+  3. On the unit itself (don't touch the phone): Tools > Cross section, sweep. Within a few seconds of the section page the phone should
+     buzz, a + appears at the station in the book page and a card with the outline.
+  4. From the phone: tap Cross section - the unit opens its cross section screen; sweep; same result.
+  5. With the phone disconnected take a section: nothing breaks; it comes over later with Receive.
+
+Simulator (cloud, 2 CPUs, every run_all.sh scenario, each with a clean simfs):
+  cave   243 scenarios 1751 pass 55 fail; cavec 243 scenarios 2198 pass 54 fail. Against the trunk 1.17.11 (89548b9b) built with the same
+  sim.cpp: every scenario identical except the new one, v117c_xsnew (6 checks: the phone told once, nowhere else; XSEC=N then sends it;
+  no app - nothing sent, still READY) - 6/6 on 1.17.12, 5/6 on 1.17.11 (it sends nothing). The fails and the corrupt_copy / migrate_v1
+  crashes are the same in the baseline. sap5xc: v117c_xsnew 6/6, v11647_xsec 30/30, v11663_xs_manual 16/16, v11711_open 13/13. sap6: v117c_xsnew 6/6,
+  v11711_open 16/16 (the sweep scenarios don't run on the sap6 build).
+
+
 Tacheo firmware 1.17.11 - "OPEN" command: the phone opens Cross section on the unit
 =====================================================================================
 Built 19 Nov 2026 01:28 PT for cavec (T1 / v1 cave unit with the colour screen), cave (T1 OLED) and sap5xc.
-Tried by Sully on a unit; released 20 Nov 2026.
+Not for Drive until Sully has tried it on a unit.
 
 WHAT AND WHY
 Sully (19 Nov 2026): "When you tap 'cross section' button, the selected Tacheo will automatically switch the the
