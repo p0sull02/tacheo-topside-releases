@@ -10,12 +10,13 @@ url: https://github.com/p0sull02/tacheo-topside-releases/releases/download/v1.6.
 size: 16766759
 md5: d465b44503d9bc5b60d1cd2be6d3075c
 tacheo: 1.16.73
-sap6: 1.16.30.5
+sap6: 1.17.13
 cave: 1.17.14
 cavec: 1.17.14
 sap5xc: 1.17.14
 sap5: 2.2.16
 notes:
+- [SAP6] 1.17.13: the SAP6 runs the same firmware as the Tacheo 1 OLED - its menus, the tap-shot countdown, cross sections (a saved one tells the phone), the LRUD slot, station links, CrossTalk's new pairing (pairs with Tacheos on 1.17.x again), messages and the phone's Cross section button; update mode shows the XIAO-SENSE drive so a stopped update can always be finished. Settings and calibration carry over.
 - [Tacheo] 1.17.14 (Tacheo 1 OLED and colour, SAP5 with the colour screen): side leads from the phone app (series names may hold - and ., e.g. A25-B1; start a side lead from any station), a saved cross section tells the phone, and update mode shows the XIAO-SENSE drive so a stopped update can always be finished.
 - [Topside] 1.6.114: CartoTable opens on a home page of your caves - pick one to open (it no longer reopens the last cave by itself; Settings > "Open the last cave at start" turns that back on). A cave you've compiled before opens almost at once: the adjustment and Reckon's findings are kept and only redone when its survey files change. Elevation comes from the agency for the state the cave is in (KyFromAbove in Kentucky, West Virginia's 1 m lidar, USGS 3DEP elsewhere). Sketches: Read with Claude reads the station names off a sketch page and places it (your own Claude API key), Import station reads, and a check window for every placed page. GIS area export. Unit firmware unchanged (1.17.11).
 - [Topside] 1.6.113: Topside is now called Tacheo - the program and the phone app. The welcome screen's card for your units is Devices; the units are the TD-1 and TD-2; Updates and Upgrades has the tabs TD, SAP6, SAP5 and Tacheo. Your settings and shots stay where they are, and folders named Topside move to the new names the first time it starts. Also: MapViewer (your cave's drafted maps on the line plot - tap a quad and its newest map comes up, shared as one map pack) and firmware installs through the unit's update drive when it shows one. Unit firmware as in 1.6.110.

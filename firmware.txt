@@ -22,8 +22,8 @@ md5: 4e347c5b0166d024ff8f7a2ecb2f7e47
 url: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.14_sap5xc.zip
 notes: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.14_sap5xc.zip.txt
 
-file: Tacheo_v1.16.30.5_sap6.zip
-size: 477927
-md5: 651da51c355d65ca39988166fd834cc4
-url: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.16.30.5_sap6.zip
-notes: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.16.30.5_sap6.zip.txt
+file: Tacheo_v1.17.13_sap6.zip
+size: 552315
+md5: 596ef4c438f6a5eba29440f345dfd1ca
+url: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.13_sap6.zip
+notes: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.13_sap6.zip.txt
