@@ -2,13 +2,13 @@
 # a newer Topside is out. Keep the name and the "key: value" lines as they are. url: the zip on this repository's Releases page.
 # tacheo / sap6 / sap5 / cave / cavec / sap5xc: the unit firmware inside that Topside. Notes may start with a tag:
 # [Topside] [Tacheo] [SAP6] [SAP5] (untagged = Topside). From 1.6.113 the program shows [Topside] as TACHEO and [Tacheo] (unit firmware) as TD.
-version: 1.6.114
-date: 2026-11-24
-file: Tacheo-1.6.114-Windows.zip
+version: 1.6.115
+date: 2026-11-25
+file: Tacheo-1.6.115-Windows.zip
 id: github
-url: https://github.com/p0sull02/tacheo-topside-releases/releases/download/v1.6.114/Tacheo-1.6.114-Windows.zip
-size: 16766759
-md5: d465b44503d9bc5b60d1cd2be6d3075c
+url: https://github.com/p0sull02/tacheo-topside-releases/releases/download/v1.6.115/Tacheo-1.6.115-Windows.zip
+size: 16964465
+md5: 272d774d0bfcef5e7926e11b32d62ee8
 tacheo: 1.16.73
 sap6: 1.17.13
 cave: 1.17.14
@@ -16,6 +16,7 @@ cavec: 1.17.14
 sap5xc: 1.17.14
 sap5: 2.2.16
 notes:
+- [Topside] 1.6.115: CartoTable has a Devices page - every instrument and calibration (your Tacheos' records and any you add or import), and which one read each survey file, so Reckon holds the survey to that calibration's own figures. The phone app's Sketch card is on the Survey tile's page. This release carries unit firmware 1.17.14 and SAP6 1.17.13.
 - [SAP6] 1.17.13: the SAP6 runs the same firmware as the Tacheo 1 OLED - its menus, the tap-shot countdown, cross sections (a saved one tells the phone), the LRUD slot, station links, CrossTalk's new pairing (pairs with Tacheos on 1.17.x again), messages and the phone's Cross section button; update mode shows the XIAO-SENSE drive so a stopped update can always be finished. Settings and calibration carry over.
 - [Tacheo] 1.17.14 (Tacheo 1 OLED and colour, SAP5 with the colour screen): side leads from the phone app (series names may hold - and ., e.g. A25-B1; start a side lead from any station), a saved cross section tells the phone, and update mode shows the XIAO-SENSE drive so a stopped update can always be finished.
 - [Topside] 1.6.114: CartoTable opens on a home page of your caves - pick one to open (it no longer reopens the last cave by itself; Settings > "Open the last cave at start" turns that back on). A cave you've compiled before opens almost at once: the adjustment and Reckon's findings are kept and only redone when its survey files change. Elevation comes from the agency for the state the cave is in (KyFromAbove in Kentucky, West Virginia's 1 m lidar, USGS 3DEP elsewhere). Sketches: Read with Claude reads the station names off a sketch page and places it (your own Claude API key), Import station reads, and a check window for every placed page. GIS area export. Unit firmware unchanged (1.17.11).
