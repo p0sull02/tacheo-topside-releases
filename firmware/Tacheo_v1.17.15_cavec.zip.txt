@@ -1,12 +1,74 @@
-released 2026-11-24 (firmware channel on GitHub, no new Topside: Topside 1.6.108+ offers it; Sully ran it on TCH-260004: "Ran the Tacheo, you can update all units now")
-Tacheo firmware 1.17.14 - side leads from the phone, and an update mode that can always be finished
+released 2026-11-26 (firmware channel on GitHub, no new Topside: Topside 1.6.108+ offers it; Sully: "update GitHub and drive" after Paul's test report - not yet tried on a unit)
+Tacheo firmware 1.17.15 - fixes from Paul's field test
 =======================================================================
-For units coming from 1.17.11 this brings 1.17.12 - 1.17.14:
-- Side leads named from the phone app: station series may hold - and . (A25-B -> A25-B1), and the phone can start a side lead from any station.
-- A saved cross section tells the phone app.
-- Update mode now shows the XIAO-SENSE drive, so an update that stops partway can be finished by copying the file onto it (Tacheo 1.6.112+ does this itself).
+- Lineplot no longer crashes or says "Not enough memory" (colour units).
+- No more "crashed" restarts from printing a figure when memory had run low (both units).
+- Pairing > Long range keeps CrossTalk connected: it switches over in steps, works on a link that is already up, and turns itself off for the power-on (READY says "Long range off: drops") if the link still keeps dropping.
+- A good loop closure stays on screen until you press a button.
+- Side lead: tap (or MENU) on the Side lead page to start the lead one station back or one on - so it starts at the station where you found it.
 
-Tacheo firmware 1.17.14 (cave, cavec, sap5xc) - 23 Nov 2026
+Tacheo firmware 1.17.15 (cave, cavec, sap5xc) - 26 Nov 2026
+================================================================
+
+WHY
+Paul Hetzer's test report on his two T1s (Messenger, 26 Nov; Tacheo reports TCH-260002 and TCH-A70CD4C0 made 26 Nov 09:14 / 09:22).
+Sully: "tacheo testing report" / "update GitHub and drive".
+
+WHAT IT FIXES
+1. Lineplot crash / "Not enough memory" (cavec, sap5xc). Paul: "Lineplot Assitance: causes unit to crash. Not Enough Memory error."
+   The colour units' crash at 0xCE4D2 (1.17.11, twice on 25 Nov) is in newlib's _dtoa_r. The second one was reached from lpTool,
+   on the check page, which prints distances with %f. Lineplot took 10,120 B from a heap whose largest free block is about
+   9,600 B (Paul's report: HEAP largest 9600). So it either refused ("Not enough memory") or left so little that the next %f
+   found no memory and newlib carried on with a null pointer.
+   HOW: Lineplot's tables now live in the calibration maths' 27 KB jacBuf (as Iron Invaders' do). The maths, the game and the
+   animations refuse or let go while lpJac is set. lpRelease() never frees jacBuf.
+2. Crashes in number conversion (all builds). The OLED unit's crash at 0xAAB36 (26 Nov 07:50, as it was switched on) is also
+   in _dtoa_r (quorem).
+   HOW: dtoaWarm() at the top of setup() prints a spread of figures once, before anything else uses the heap. newlib keeps
+   that conversion memory and reuses it from then on.
+3. Long range kills CrossTalk. Paul: "When putting it in extended range in menu, this caused Crosstalk to disconnect
+   completely. Checked this with multiple tries."
+   Cause: the Coded PHY was asked for on a link set up for 251-byte packets, with a 7.5 ms connection event on the central
+   and a 2 s supervision time-out. One such packet takes about 17 ms on the Coded PHY, so the link timed out (0x08).
+   HOW: the switch now goes in three steps about 0.6 s apart: data length 27 bytes, then the central sets a 50 ms interval
+   with a 6 s time-out, then the Coded PHY. Pairing > Long range now works on a link that is already up; Off goes back to
+   1M. After two time-outs (0x08 / 0x3E) within 10 min of a switch, long range is left off until the next power-on, and READY
+   shows "Long range off: drops" for 60 s.
+4. A good loop closure stays on screen until a press (30 s at most); before, it showed for 2.5 s. Paul: "flashed ... didn't
+   stay on screen long enough to be sure".
+5. Side lead: a tap / MENU on the Side lead page now opens a list: Start the lead, From: one back, From: one on, Next letter.
+   The lead can now start at the station it was found at. Before, it always started at the station the unit was at, and
+   MENU only changed the letter (Paul's unit made C > CD > CDC). Paul: "Attached side lead to wrong station."
+
+SIZES
+cavec  798,916 of 811,008 B flash (98 %), RAM 207,144 B
+cave   644,928 B (79 %), RAM 153,448 B
+sap5xc 782,804 B (96 %), RAM 206,056 B
+All three: 0 unaligned literal block loads.
+
+SIMULATOR (cloud, against a 1.17.14 baseline built from the same sim.cpp)
+All 244 scenarios on cave and cavec. The only differences from the baseline:
+- xchk_waits: 17/3 -> 19/1. The new long-range steps pass. "1.5 deg off: agree" fails in the baseline too.
+- v111_depth_ui: updated for the loop page waiting for a press; 7/0.
+- v11657_spam (cave): 6/1 -> 7/0.
+- v1130_stations: new side-lead From back / From on round trip, 34/0.
+v11678_lineplot: 36/0 (cavec). ASan/UBSan clean on v11678_lineplot, v1130_stations, xchk_waits and v111_depth_ui.
+v11679_lineplot_tch7 segfaults in the baseline too (rc 139), so it is not this change.
+sim.cpp and mock/bluefruit.h changed (requestDataLengthUpdate, requestConnectionParameter, peerDisconnects(why)).
+
+NOT TESTED ON HARDWARE. The long-range steps can't be checked in the simulator against a real SoftDevice.
+
+TEST FOR SULLY
+1. Lineplot on a colour unit with a survey of 30+ legs: open it, go through the check page, then leave and open it again
+   5 times. There should be no "Not enough memory" and no RESTARTED.
+2. Switch on 10 times from standby, then make a Tacheo report: no "crashed" restarts.
+3. Two units in CrossTalk at 30 ft: Pairing > Long range On (on either unit). The link should stay up, and serial shows
+   "partner: long range (Coded PHY) asked for". Walk out past 30 ft. Switch Long range Off: "back to normal range".
+4. Close a loop with Leg track on: the good-loop page waits for a press.
+5. Stations > Side lead > tap: From: one back > Start the lead. The first leg should be from the earlier station.
+
+
+Tacheo firmware 1.17.14 (cave, cavec, sap5xc) - 23 Nov 2026 - NOT ON THE FIRMWARE CHANNEL (placed in Topside on Sully's PC to try first)
 
 What and why
 Sully, 23 Nov 17:01: "Can I currently control the stations on the phone app? Say I want to do a side lead, can I manually edit the next station designation to be A25-B1?"; 17:02: "Add that in, and have the Tacheo read the change and update as well."
