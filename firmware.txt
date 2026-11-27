@@ -10,11 +10,11 @@ md5: 6e1b99b192b665312ac08369b1f46c27
 url: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.14_cave.zip
 notes: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.14_cave.zip.txt
 
-file: Tacheo_v1.17.14_cavec.zip
-size: 797715
-md5: 748439e4f5d1e8d500d5fd26b9187a53
-url: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.14_cavec.zip
-notes: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.14_cavec.zip.txt
+file: Tacheo_v1.17.16_cavec.zip
+size: 779747
+md5: 712f17503f942a126cf8d25c33923fcc
+url: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.16_cavec.zip
+notes: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware/Tacheo_v1.17.16_cavec.zip.txt
 
 file: Tacheo_v1.17.14_sap5xc.zip
 size: 781275
