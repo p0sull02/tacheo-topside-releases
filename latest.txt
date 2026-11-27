@@ -12,10 +12,11 @@ md5: c5b137e7e26c2308585941579605bd16
 tacheo: 1.16.73
 sap6: 1.17.13
 cave: 1.17.14
-cavec: 1.17.16
+cavec: 1.17.18
 sap5xc: 1.17.14
 sap5: 2.2.16
 notes:
+- [Tacheo] 1.17.18 (Tacheo 1 colour): same features as 1.17.16, compiled to leave room to grow - it now uses 76 % of the unit's program space (was 96 %), with the time-critical parts still compiled for speed.
 - [Tacheo] 1.17.16 (Tacheo 1 colour): the fixes from Paul's field test - Lineplot no longer crashes or runs out of memory, no "crashed" restarts from printing a figure, Long range keeps CrossTalk connected, a good loop closure waits for a button, and a side lead can start one station back or one on. (1.17.15 had these but was too big for the colour unit's update bootloader and never finished installing; 1.17.16 installs.)
 - [Topside] 1.6.116: CartoTable's Survey data page is redesigned - a card per trip, the book's front sight and backsight in bold with a green/amber/red agreement chip and the value used grey beneath, L R U D columns, end stations' LRUD (their own line, or the station before's marked assumed), and "+ Add a line": Enter walks length, front sight, backsight, inclination and L R U D, then fills in the next station. A leg whose front and back sights disagree badly uses the sight the loops back instead of their average. Sketch Read works with Claude, ChatGPT, Gemini, Azure OpenAI (Copilot's models) or any OpenAI-compatible server (your own key). Unit firmware unchanged (1.17.14, SAP6 1.17.13).
 - [Topside] 1.6.115: CartoTable has a Devices page - every instrument and calibration (your Tacheos' records and any you add or import), and which one read each survey file, so Reckon holds the survey to that calibration's own figures. The phone app's Sketch card is on the Survey tile's page. This release carries unit firmware 1.17.14 and SAP6 1.17.13.

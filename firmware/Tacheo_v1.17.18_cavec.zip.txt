@@ -1,3 +1,9 @@
+released 2026-11-27 (firmware channel on GitHub, no new Topside: Topside 1.6.108+ offers it; Sully ran 1.17.17 and 1.17.18 on his colour unit over the cable - "Works well" - and said "Also release the new Tacheo firmware")
+Tacheo firmware 1.17.18 - 1.17.16, compiled to leave room to grow (colour Tacheo 1)
+=======================================================================
+- Same features and fixes as 1.17.16. The firmware is now compiled small (76 % of the unit's program space, was 96 %), so future features fit and the install can't hit the size limit that stopped 1.17.15. The speed-critical parts (calibration maths, screen link, animations, compass and tilt sampling, shot capture, cross sections) are still compiled for speed.
+- zip md5 036d1a4ccf5bbff0cb27bb1363a7d76a; image ends 0xBF054 (176 KB below the bootloader limit).
+
 test build 2026-11-27 (not released; offered to Sully's PC Tacheo and to phones with the Bluetooth update test switch and "Test builds" on)
 Tacheo firmware 1.17.18 - 1.17.17 with a new number, for testing the Bluetooth update (colour Tacheo 1)
 =======================================================================
