@@ -2,13 +2,13 @@
 # a newer Topside is out. Keep the name and the "key: value" lines as they are. url: the zip on this repository's Releases page.
 # tacheo / sap6 / sap5 / cave / cavec / sap5xc: the unit firmware inside that Topside. Notes may start with a tag:
 # [Topside] [Tacheo] [SAP6] [SAP5] (untagged = Topside). From 1.6.113 the program shows [Topside] as TACHEO and [Tacheo] (unit firmware) as TD.
-version: 1.6.116
-date: 2026-11-25
-file: Tacheo-1.6.116-Windows.zip
+version: 1.6.119
+date: 2026-11-28
+file: Tacheo-1.6.119-Windows.zip
 id: github
-url: https://github.com/p0sull02/tacheo-topside-releases/releases/download/v1.6.116/Tacheo-1.6.116-Windows.zip
-size: 18162489
-md5: c5b137e7e26c2308585941579605bd16
+url: https://github.com/p0sull02/tacheo-topside-releases/releases/download/v1.6.119/Tacheo-1.6.119-Windows.zip
+size: 16858713
+md5: c3d5fbc85598fe55a2cef03e9eb200ae
 tacheo: 1.16.73
 sap6: 1.17.13
 cave: 1.17.14
@@ -16,6 +16,7 @@ cavec: 1.17.21
 sap5xc: 1.17.14
 sap5: 2.2.16
 notes:
+- [Topside] 1.6.119: an update that gets stuck on the unit's update drive now finishes by itself over the USB serial port (a unit left in update mode by an earlier failed install no longer stays stuck). CartoTable: Home's data-issues snapshot; Devices has its own page; dated instrument corrections and compass courses applied when the cave compiles; Map and GIS opens on shaded relief with closed hollows and 10 ft contours, and the green Run writes the GIS layers into Documents\CartoTable\<cave>\GIS\<date>. Unit firmware: Tacheo 1 colour 1.17.21, Tacheo 1 OLED and SAP5 colour 1.17.14, SAP6 1.17.13.
 - [Tacheo] 1.17.21 (Tacheo 1 colour): Bluetooth updates from the phone app take about a minute, with a bar on the unit's screen; if one stops part way the unit keeps its firmware. Put 1.17.21 on once over USB, then update from the phone. READY now shows the linked phone's name, or "No phone".
 - [Tacheo] 1.17.18 (Tacheo 1 colour): same features as 1.17.16, compiled to leave room to grow - it now uses 76 % of the unit's program space (was 96 %), with the time-critical parts still compiled for speed.
 - [Tacheo] 1.17.16 (Tacheo 1 colour): the fixes from Paul's field test - Lineplot no longer crashes or runs out of memory, no "crashed" restarts from printing a figure, Long range keeps CrossTalk connected, a good loop closure waits for a button, and a side lead can start one station back or one on. (1.17.15 had these but was too big for the colour unit's update bootloader and never finished installing; 1.17.16 installs.)
