@@ -1,3 +1,13 @@
+released 2026-11-27 (firmware channel on GitHub, no new Topside: Topside 1.6.108+ and the phone app offer it; Sully ran it on his colour unit and updated it over Bluetooth from the phone - "Sent in 21 s, installed in 35 s" / "Nice! It worked!!" - then "go ahead and release the update and release Bluetooth updating mode")
+Tacheo firmware 1.17.21 - fast Bluetooth updates, and READY names the phone (colour Tacheo 1)
+=======================================================================
+- Bluetooth updates from the phone app take about a minute (they took up to half an hour and could stop part way). The unit takes the new firmware while it runs, with UPDATE and a percentage bar on its screen, checks it, installs it and restarts. If anything stops it part way, the unit keeps the firmware it has. Shots, calibration and settings stay.
+- Put 1.17.21 on once over USB with Tacheo on a computer; after that, updates can come from the phone app (Tacheo app 1.15 or newer, Android).
+- READY says whether a phone is linked: the top tag shows the phone's own name (e.g. "Pixel 10 Pro") or "No phone", and the middle line reads "Linked: <phone>" or "No phone linked", with how many shots are waiting to go to it.
+- Fixed in this release: test build 1.17.19 stopped phones connecting (its new Bluetooth service moved the others); 1.17.20 and later add it last.
+- Same features and fixes as 1.17.18 otherwise.
+- zip md5 177da03783631fcbccbd4f4ff5a44a19; image ends 0xC0C9C (168 KB below the bootloader limit).
+
 Tacheo firmware 1.17.21 cavec - TEST build (27 Nov 2026)
 
 WHAT AND WHY
