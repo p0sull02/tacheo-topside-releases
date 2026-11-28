@@ -1,3 +1,11 @@
+test build 2026-11-27 (not released; on Sully's PC Tacheo, and on the phone's test channel)
+Tacheo firmware 1.17.20 - 1.17.19's fast Bluetooth update, with its Bluetooth service added last (colour Tacheo 1)
+=======================================================================
+- Sully on 1.17.19: "the app cant see tacheo anymore". The phone found the unit but the link never finished setting up: phones keep a copy of a unit's Bluetooth services (and where each one sits) even when not paired, and 1.17.19 put the new update service in front of the console, so the phone's copy pointed at the wrong places. 1.17.20 adds it last: everything that was there before is where it was. (App 1.16 also throws the copy away at each connection.)
+- Everything else as 1.17.19 (the fast update with the bar on the unit).
+- TEST: with app 1.16 connected to the unit on 1.17.19, Devices -> Update -> Tacheo56EB -> "Update to 1.17.20" (Test builds ticked): the first fast update over Bluetooth.
+
+
 test build 2026-11-27 (not released; on Sully's PC Tacheo, and on the phone's test channel for the Bluetooth test)
 Tacheo firmware 1.17.19 - the fast Bluetooth update, with a progress bar on the unit (colour Tacheo 1)
 =======================================================================
