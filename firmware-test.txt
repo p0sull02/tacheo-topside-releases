@@ -3,8 +3,8 @@
 # A test build is offered only when it is newer than the released one for that build. Same lines as firmware.txt; remove a block
 # (or the whole list) once the build is released or dropped.
 
-file: Tacheo_v1.17.20_cavec.zip
-size: 629627
-md5: a8f3c336ca0a84348ec4fc9da6cda5e0
-url: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/test/Tacheo_v1.17.20_cavec.zip
-notes: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/test/Tacheo_v1.17.20_cavec.zip.txt
+file: Tacheo_v1.17.21_cavec.zip
+size: 630731
+md5: 177da03783631fcbccbd4f4ff5a44a19
+url: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/test/Tacheo_v1.17.21_cavec.zip
+notes: https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/test/Tacheo_v1.17.21_cavec.zip.txt

@@ -1,0 +1,882 @@
+Tacheo firmware 1.17.21 cavec - TEST build (27 Nov 2026)
+
+WHAT AND WHY
+Sully, 27 Nov 2026 (photo of READY showing "BT+"): "The tacheo device should give a name or indication its connected
+to something on the ready screen. I still cant tell."
+
+READY now says in words whether a phone is linked:
+- Top bar: the blue tag shows the linked phone's own name (filled), e.g. "Pixel 10 Pro", in place of "BT".
+  With no phone linked it reads "No phone" (outline). A "+" after it still means shots waiting to go to the phone;
+  " +1" means a second app is linked too.
+- READY's link line (when no Crosstalk partner line is showing): "Linked: Pixel 10 Pro" in blue with the Bluetooth
+  sign, or "No phone linked" in grey. "- N to send" is added when shots are waiting for the phone.
+- 128-px OLED screens: the same line on the 4th line when nothing else is there.
+
+HOW
+- The unit reads the phone's Bluetooth device name (GAP Device Name, 0x2A00) once, 2 s after the phone links, from the
+  loop (never in the Bluetooth callbacks; the read waits at most 0.5 s). Kept per connection; printable ASCII, 20 chars
+  max; "Phone" when the phone gives no name. Serial prints "app name: ...".
+- Everything else as 1.17.20 (the fast-update service added last, so older services keep their handles).
+
+TEST FOR SULLY
+1. Install over USB (Topside > Devices > Update, or drag the .uf2 onto XIAO-SENSE).
+2. READY with the phone link on and no phone: top right "No phone", middle "No phone linked".
+3. Connect from the app: within ~2 s the tag and line change to the phone's name ("Linked: Pixel 10 Pro").
+4. Turn the phone's Bluetooth off: back to "No phone" within the link timeout.
+If the phone still cannot connect on 1.17.21, open Tacheo Topside on the PC > Bluetooth scan with the unit on:
+if the PC doesn't list it either, the unit isn't on the air (firmware); if the PC lists it, the problem is between
+the phone and the unit.
+
+SIM
+cavec simulator, all 244 scenarios: results identical to 1.17.20 (same pass/fail counts and return codes).
+READY snapshots checked (bt_link: "No phone" / "No phone linked"; linked: "Phone" tag and "Linked: Phone" before the
+name read lands). Mock BLEConnection gained connected() and getPeerName() (returns "Pixel 10 Pro").
+
+BUILD
+Image 0x27000-0xC0C9C (168804 B below 0xEA000), 0 unaligned literal loads.
+Tacheo_v1.17.21_cavec.zip  629916 B payload, md5 177da03783631fcbccbd4f4ff5a44a19
+Tacheo_v1.17.21_cavec.uf2  md5 ddae2f3ca4a7e0df4519b48dda56ce0d
+Tacheo_v1.17.21_cavec.elf  md5 1a3edf99594f9cc280cda1f0ee35e774
+Tacheo.ino md5 4e93ad5c70b09bd06c0948354dcb7f30, TacheoColourPages.h md5 f769a250c52b322cf6e6bb094004cae6
+
+
+test build 2026-11-27 (not released; on Sully's PC Tacheo, and on the phone's test channel)
+Tacheo firmware 1.17.20 - 1.17.19's fast Bluetooth update, with its Bluetooth service added last (colour Tacheo 1)
+=======================================================================
+- Sully on 1.17.19: "the app cant see tacheo anymore". The phone found the unit but the link never finished setting up: phones keep a copy of a unit's Bluetooth services (and where each one sits) even when not paired, and 1.17.19 put the new update service in front of the console, so the phone's copy pointed at the wrong places. 1.17.20 adds it last: everything that was there before is where it was. (App 1.16 also throws the copy away at each connection.)
+- Everything else as 1.17.19 (the fast update with the bar on the unit).
+- TEST: with app 1.16 connected to the unit on 1.17.19, Devices -> Update -> Tacheo56EB -> "Update to 1.17.20" (Test builds ticked): the first fast update over Bluetooth.
+
+
+test build 2026-11-27 (not released; on Sully's PC Tacheo, and on the phone's test channel for the Bluetooth test)
+Tacheo firmware 1.17.19 - the fast Bluetooth update, with a progress bar on the unit (colour Tacheo 1)
+=======================================================================
+- Sully: "half an hour for an update is utterly rediculous" / "yes do the change" / "build in a firmware change that shows the percentage bar of the update on the tacheo".
+- The phone (app 1.15) now sends a new firmware to the RUNNING Tacheo, not to its bootloader: full-size Bluetooth packets, written to the unit's 2 MB storage chip, the unit saying how much it has written so the phone can't outrun it. Expected: well under a minute to send, about 30 s to install.
+- The unit shows UPDATE with a percentage bar while it receives ("Receiving 1.17.x"), then "Checking it", then "Installing - keep it on" with the bar filling as it installs, then restarts on the new firmware.
+- If anything stops it before installing (link lost, Stop, a check fails), the unit keeps the firmware it has and goes back to READY - nothing to recover.
+- If the install itself is interrupted (power), the unit comes up in its USB update mode (the XIAO-SENSE drive) - Tacheo on a computer finishes, as today. It can't freeze needing the reset button: a hardware watchdog restarts it.
+- Everything else as 1.17.18.
+
+TEST FOR SULLY
+1. Put this on over the cable with Tacheo on the PC (once - 1.17.18 has no fast update).
+2. Phone app 1.15 (green update card). Test switch on, Test builds ticked.
+3. Devices -> Update -> Tacheo56EB -> "Put 1.17.19 on again", unit on READY, phone next to it.
+4. Watch the bar on the unit; note the "Sent in / installed in" times the phone shows. Send the report either way.
+
+TECHNICAL
+- TacheoOta.h (new, included at the end of Tacheo.ino): service 000015A0-1212-efde-1523-785feabcd123 (the legacy DFU base: no new vendor UUID base; the SoftDevice keeps 10), data 15A1 (WRITE_WO_RESP, 244, value in user RAM, callback straight from the BLE task into a 16 KB ring in calmath::jacBuf), control 15A2 (WRITE | NOTIFY): B/X from the phone; b (window 12 KB), a (written), v, i, e from the unit.
+- The loop (otaService) takes over: /ota.bin on ExtFS, acks every 2 KB written, 15 s with no data = stop. Checks: littlefs CRC-16 = the package's, size, vector table (SP in RAM, reset vector odd in 0x27000-0xEA000), "Tacheo cavec\0" inside (bleDis's model string).
+- Install: the file's runs on the chip from its littlefs CTZ chain (TacheoLfsCtz.h); a dry run of the RAM routine reads them by QSPI EasyDMA and must give the same CRC before anything is touched; checks bank_0 is 1 or FFFF and UICR.NRFFW[0] = 0xF4000. Then WDT 3 s, vTaskSuspendAll, sd_softdevice_disable, interrupts off, otaRamRun (in .data, 1412 B, no calls out): settings page erased, each 4 KB page erased + written + bar drawn (SPIM3 + DC by register; cv bar 24,116 272x24 / classic 5,145 310x12), CRC of the written area = the package's -> settings written (bank_0 1, CRC, bank_0_size, app_image_size), then the watchdog restarts it (a soft reset would leave the WDT running in the new firmware).
+- Image 0x27000-0xC084C (169,908 B below 0xEA000). RAM: 209,160 B globals (otaRamRun 1,412 B in RAM, otaJob 216, data value 244).
+- Simulator: 244 scenarios identical to the 1.17.17/1.17.18 baseline (the fast update isn't simulated: TACHEO_SIM). The cave, cave2 and sap5xc builds compile with it.
+- Phone side bench-tested (FastOta.java against a model of this firmware: window, acks, refusal, stop part way, bad CRC, odd size).
+
+
+released 2026-11-27 (firmware channel on GitHub, no new Topside: Topside 1.6.108+ offers it; Sully ran 1.17.17 and 1.17.18 on his colour unit over the cable - "Works well" - and said "Also release the new Tacheo firmware")
+Tacheo firmware 1.17.18 - 1.17.16, compiled to leave room to grow (colour Tacheo 1)
+=======================================================================
+- Same features and fixes as 1.17.16. The firmware is now compiled small (76 % of the unit's program space, was 96 %), so future features fit and the install can't hit the size limit that stopped 1.17.15. The speed-critical parts (calibration maths, screen link, animations, compass and tilt sampling, shot capture, cross sections) are still compiled for speed.
+- zip md5 036d1a4ccf5bbff0cb27bb1363a7d76a; image ends 0xBF054 (176 KB below the bootloader limit).
+
+test build 2026-11-27 (not released; offered to Sully's PC Tacheo and to phones with the Bluetooth update test switch and "Test builds" on)
+Tacheo firmware 1.17.18 - 1.17.17 with a new number, for testing the Bluetooth update (colour Tacheo 1)
+=======================================================================
+- Identical to 1.17.17 (6 bytes differ: the version text). Sully ran 1.17.17 over the cable: "Works well". This number gives the phone's Bluetooth update something newer to send.
+- zip md5 036d1a4ccf5bbff0cb27bb1363a7d76a, crc16 45747; image ends 0xBF054.
+
+test build 2026-11-27 (not released; offered only to Sully's PC Tacheo and to phones with the Bluetooth update test switch and "Test builds" on)
+Tacheo firmware 1.17.17 - 1.17.16, compiled to leave room to grow (colour Tacheo 1)
+=======================================================================
+- Same features as 1.17.16. The firmware is compiled small (76 % of the unit's program space, was 96 %), with the speed-critical parts - calibration maths, the screen link, the animations, compass and tilt sampling, shot capture, cross sections - compiled for speed as before.
+- Watch for: anything that feels slower than 1.17.16 (calibration Computing, a shot to READY, page draws, the power-down animation).
+
+TECHNICAL
+- #pragma GCC optimize ("Os", "fast-math") on the sketch; HOT_BEGIN/HOT_END (Ofast) around CalMath.h, the LCD link block, TacheoAnimOff/Oled/OffOled; HOT_FN on sampleQuiet, capCompassN, capturePoint, xsCapture(Manual), xsCompute, finishShot, gyroTrack. Off in the simulator.
+- 622,676 B, ends 0xBF054 (176,044 B below the bootloader's 0xEA000). zip md5 652baf9abf6e095c3c8c7d865d01f756, crc16 48816.
+- Simulator: 244 scenarios identical to the 1.17.15 baseline. Hot functions byte-identical in size to 1.17.16.
+
+released 2026-11-27 (firmware channel on GitHub, no new Topside: Topside 1.6.108+ offers it; Sully ran it on his colour unit: "Tested on my device. Works well, release the update")
+Tacheo firmware 1.17.16 - 1.17.15's fixes, in a build that installs (colour Tacheo 1)
+=======================================================================
+- 1.17.15 for the colour Tacheo was too big for the unit's update bootloader (by 420 bytes): the install never finished and the Tacheo stayed in update mode with the XIAO-SENSE drive showing. 1.17.16 is the same firmware compiled smaller (20 KB), and it installs.
+- From 1.17.15:
+  - Lineplot no longer crashes or says "Not enough memory" (colour units).
+  - No more "crashed" restarts from printing a figure when memory had run low (both units).
+  - Pairing > Long range keeps CrossTalk connected: it switches over in steps, works on a link that is already up, and turns itself off for the power-on (READY says "Long range off: drops") if the link still keeps dropping.
+  - A good loop closure stays on screen until you press a button.
+  - Side lead: tap (or MENU) on the Side lead page to start the lead one station back or one on - so it starts at the station where you found it.
+
+TECHNICAL
+- The XIAO's bootloader (0.6.1) installs an app only below 0xEA000 (798,720 bytes from 0x27000), on the drive and over serial alike. 1.17.15 cavec ended at 0xEA1A4; 1.17.16 ends at 0xE52B4 (19,788 bytes to spare).
+- 1.17.16: the pages, tools, the serial console and start-up are compiled small (Os, fast-math kept); the shot path, sensors, calibration maths, cross-section capture, LCD link and animations are unchanged. The build kit now refuses any image past 0xEA000.
+- zip md5 712f17503f942a126cf8d25c33923fcc, crc16 12606, 778,932 bytes.
+
+released 2026-11-26 (firmware channel on GitHub, no new Topside: Topside 1.6.108+ offers it; Sully: "update GitHub and drive" after Paul's test report - not yet tried on a unit)
+Tacheo firmware 1.17.15 - fixes from Paul's field test
+=======================================================================
+- Lineplot no longer crashes or says "Not enough memory" (colour units).
+- No more "crashed" restarts from printing a figure when memory had run low (both units).
+- Pairing > Long range keeps CrossTalk connected: it switches over in steps, works on a link that is already up, and turns itself off for the power-on (READY says "Long range off: drops") if the link still keeps dropping.
+- A good loop closure stays on screen until you press a button.
+- Side lead: tap (or MENU) on the Side lead page to start the lead one station back or one on - so it starts at the station where you found it.
+
+Tacheo firmware 1.17.15 (cave, cavec, sap5xc) - 26 Nov 2026
+================================================================
+
+WHY
+Paul Hetzer's test report on his two T1s (Messenger, 26 Nov; Tacheo reports TCH-260002 and TCH-A70CD4C0 made 26 Nov 09:14 / 09:22).
+Sully: "tacheo testing report" / "update GitHub and drive".
+
+WHAT IT FIXES
+1. Lineplot crash / "Not enough memory" (cavec, sap5xc). Paul: "Lineplot Assitance: causes unit to crash. Not Enough Memory error."
+   The colour units' crash at 0xCE4D2 (1.17.11, twice on 25 Nov) is in newlib's _dtoa_r. The second one was reached from lpTool,
+   on the check page, which prints distances with %f. Lineplot took 10,120 B from a heap whose largest free block is about
+   9,600 B (Paul's report: HEAP largest 9600). So it either refused ("Not enough memory") or left so little that the next %f
+   found no memory and newlib carried on with a null pointer.
+   HOW: Lineplot's tables now live in the calibration maths' 27 KB jacBuf (as Iron Invaders' do). The maths, the game and the
+   animations refuse or let go while lpJac is set. lpRelease() never frees jacBuf.
+2. Crashes in number conversion (all builds). The OLED unit's crash at 0xAAB36 (26 Nov 07:50, as it was switched on) is also
+   in _dtoa_r (quorem).
+   HOW: dtoaWarm() at the top of setup() prints a spread of figures once, before anything else uses the heap. newlib keeps
+   that conversion memory and reuses it from then on.
+3. Long range kills CrossTalk. Paul: "When putting it in extended range in menu, this caused Crosstalk to disconnect
+   completely. Checked this with multiple tries."
+   Cause: the Coded PHY was asked for on a link set up for 251-byte packets, with a 7.5 ms connection event on the central
+   and a 2 s supervision time-out. One such packet takes about 17 ms on the Coded PHY, so the link timed out (0x08).
+   HOW: the switch now goes in three steps about 0.6 s apart: data length 27 bytes, then the central sets a 50 ms interval
+   with a 6 s time-out, then the Coded PHY. Pairing > Long range now works on a link that is already up; Off goes back to
+   1M. After two time-outs (0x08 / 0x3E) within 10 min of a switch, long range is left off until the next power-on, and READY
+   shows "Long range off: drops" for 60 s.
+4. A good loop closure stays on screen until a press (30 s at most); before, it showed for 2.5 s. Paul: "flashed ... didn't
+   stay on screen long enough to be sure".
+5. Side lead: a tap / MENU on the Side lead page now opens a list: Start the lead, From: one back, From: one on, Next letter.
+   The lead can now start at the station it was found at. Before, it always started at the station the unit was at, and
+   MENU only changed the letter (Paul's unit made C > CD > CDC). Paul: "Attached side lead to wrong station."
+
+SIZES
+cavec  798,916 of 811,008 B flash (98 %), RAM 207,144 B
+cave   644,928 B (79 %), RAM 153,448 B
+sap5xc 782,804 B (96 %), RAM 206,056 B
+All three: 0 unaligned literal block loads.
+
+SIMULATOR (cloud, against a 1.17.14 baseline built from the same sim.cpp)
+All 244 scenarios on cave and cavec. The only differences from the baseline:
+- xchk_waits: 17/3 -> 19/1. The new long-range steps pass. "1.5 deg off: agree" fails in the baseline too.
+- v111_depth_ui: updated for the loop page waiting for a press; 7/0.
+- v11657_spam (cave): 6/1 -> 7/0.
+- v1130_stations: new side-lead From back / From on round trip, 34/0.
+v11678_lineplot: 36/0 (cavec). ASan/UBSan clean on v11678_lineplot, v1130_stations, xchk_waits and v111_depth_ui.
+v11679_lineplot_tch7 segfaults in the baseline too (rc 139), so it is not this change.
+sim.cpp and mock/bluefruit.h changed (requestDataLengthUpdate, requestConnectionParameter, peerDisconnects(why)).
+
+NOT TESTED ON HARDWARE. The long-range steps can't be checked in the simulator against a real SoftDevice.
+
+TEST FOR SULLY
+1. Lineplot on a colour unit with a survey of 30+ legs: open it, go through the check page, then leave and open it again
+   5 times. There should be no "Not enough memory" and no RESTARTED.
+2. Switch on 10 times from standby, then make a Tacheo report: no "crashed" restarts.
+3. Two units in CrossTalk at 30 ft: Pairing > Long range On (on either unit). The link should stay up, and serial shows
+   "partner: long range (Coded PHY) asked for". Walk out past 30 ft. Switch Long range Off: "back to normal range".
+4. Close a loop with Leg track on: the good-loop page waits for a press.
+5. Stations > Side lead > tap: From: one back > Start the lead. The first leg should be from the earlier station.
+
+
+Tacheo firmware 1.17.14 (cave, cavec, sap5xc) - 23 Nov 2026 - NOT ON THE FIRMWARE CHANNEL (placed in Topside on Sully's PC to try first)
+
+What and why
+Sully, 23 Nov 17:01: "Can I currently control the stations on the phone app? Say I want to do a side lead, can I manually edit the next station designation to be A25-B1?"; 17:02: "Add that in, and have the Tacheo read the change and update as well."
+- The unit's series names were letters and digits only, so the phone could not tell it about a side lead named A25-B: STNAT=A25-B1 was refused (STN BAD STATION) and the phone only ever sent the series' letters.
+- There was no way to start a side lead from the phone; only the unit's own Stations > Side lead (series AA, AB ...).
+
+How
+- A series name may now hold - and . (not as its first character): A25-B gives stations A25-B1, A25-B2 ...; A25-B2.C works for a lead off the lead. Letters-and-digits names work as before. Up to 10 characters, as before.
+- New command STNLEAD=<from>,<series> (USB and Bluetooth, the same handler as STN? / STNSET / STNAT): the series is added if new, the unit is at <from> and its next leg runs <from> to <series>1, exactly as Stations > Side lead does on the unit (READY shows "At A25>A25-B"). A lead already surveyed keeps the station it left. A lead name ending in a digit is refused (A25 + 1 would read A251). Replies OK STN ... or STN BAD LEAD.
+- Back on the main line the phone sends STNAT=A25 as before.
+- The phone app (cartotable-app 5374c18, live) sends these: Data > Change > "Start a side lead from this station", or tap a station in the plan > "Start a side lead here"; "Back to the main line" restores the main series and its next number. With firmware older than 1.17.14 the phone still names every shot and says once that the unit needs 1.17.14.
+- Everything else as 1.17.13 (the UF2 update mode included). sap6 not rebuilt (its own sketch line).
+
+Sim (cavec): new scenario v11714_stnlead 17/17 pass (STNLEAD, legs A25-A25-B1, backsight, A25-B1-A25-B2, STNAT back to A25 -> A26, STNAT=A25-B2 picks the lead up again, a lead off the lead with a dot, bad names refused, kept on flash, LOG lines). The full suite old (1.17.13) vs new: identical on all 243 shared scenarios (2198 checks; the same 54 failures in both - not new).
+Size: cavec 796,676 of 811,008 bytes (98%), about 500 bytes more than 1.17.13.
+
+Test for Sully (bench, phone app + a unit on 1.17.14, Leg track On)
+1. Phone: open a survey, Data > Change > Start a side lead from this station (e.g. A25, series A25-B). The unit's READY should read "At A25>A25-B".
+2. Shoot a leg: phone and unit both call it A25 -> A25-B1; the next one A25-B1 -> A25-B2.
+3. Phone: Back to the main line (at A25). The unit should read "At A25"; the next leg A25 -> A26 on both.
+
+
+Tacheo firmware 1.17.13 (cave, cavec, sap5xc, sap6) - 22 Nov 2026 - NOT ON THE FIRMWARE CHANNEL (placed in Topside on Sully's PC to try first)
+
+What and why
+Sully, 22 Nov 08:27: "You need the change the code so something like this doesn't happen in the future. It's happened 2x times now."
+- Zach's colour T1 (TCH-260006): Topside 1.6.109's USB update to 1.17.10 on 19 Nov erased the old firmware (single bank: 796 KB doesn't fit twice), then stopped at about 88% with adafruit-nrfutil "Write timeout". No firmware to start. Its update mode was serial only (the 1200-baud touch -> enterSerialDfu, GPREGRET 0x4E): no XIAO-SENSE drive, and on battery that session ends only with the reset button or a flat battery (unplugging does nothing). Three more tries (21-22 Nov) got no answer from the stuck session, and the .uf2 had nowhere to go. The T1 colour's reset button can't be reached.
+- Sully's own unit died the same way over Bluetooth on 20 Nov.
+
+How
+- Update mode now shows the drive. The Seeed core's 1200-baud touch handler (TinyUSB_Port_EnterDFU in Adafruit_TinyUSB_nrf.cpp - not weak, so the sketch can't override it) now calls enterUf2Dfu (GPREGRET 0x57, the bootloader's UF2 mode) instead of enterSerialDfu. UF2 mode has the same serial port, so adafruit-nrfutil still works, plus the XIAO-SENSE drive. An update that stops part-way leaves the drive there, and the .uf2 can be copied onto it (Topside 1.6.112 does that by itself) - no reset button needed.
+- Done in the build: build_fw.sh patches the kit's core before compiling (every build from now on gets it). The sketch itself only has the version bump and this note. Checked in the cavec .elf: TinyUSB_Port_EnterDFU branches to enterUf2Dfu, which writes 0x57 to GPREGRET and resets.
+- Everything else as 1.17.12 (the version pulled from the channel on 20 Nov). 1.17.13 = 1.17.12 + this.
+
+Topside 1.6.112 (with it)
+- Installs through the update drive whenever update mode shows one (the .uf2 copied onto XIAO-SENSE, as dragging it by hand does).
+- A serial install that stops is finished through the drive when there is one.
+- adafruit-nrfutil's failures are caught as they happen (it exits 0 when it fails).
+- "Port in use" (Zach's 22 Nov "Access is denied" on COM4) and "update mode stopped answering" have their own messages; the old "safe in update mode: unplug it, plug it back in" is gone.
+
+The test for Sully (bench unit, USB)
+1. Topside 1.6.112: update the unit to 1.17.13. This first update still goes the old serial way (the unit's current firmware opens serial-only update mode). Expect it to finish as before.
+2. Then Updates > Rescue > Force update mode (or install 1.17.13 again). Expect the XIAO-SENSE drive to appear in Explorer within a few seconds, and the update log to say "Update drive ... copying the firmware there as a .uf2".
+3. Optional, the real proof: in update mode with the drive showing, start an install and pull the USB cable at about half way, plug it back in. The drive should come back (the unit has no firmware, so the bootloader stays with its drive); Install again finishes it.
+
+Sim: not run - the sketch's code is unchanged (version strings only); the change is in the USB core, which the simulator doesn't model.
+
+
+1.17.12 (20 Nov 2026) - cave, cavec, sap5xc, sap6. Built, NOT released (Topside on the PC only; firmware-test.txt for the phone's Test builds).
+
+What and why - Sully, 20 Nov 2026: "How about, whenever the tach takes a cross section, it sends it over via Bluetooth?" / "The app doesn't
+need to sent a prompt every 3s" / "And with this firmware update, I can test the Bluetooth update mode."
+  A cross section saved on the unit now sends one line, "XSEC new id=N", to every app linked over Bluetooth (the phone, and a tablet if one
+  is on the second slot). The phone fetches that one section (XSEC=N) and puts it in the live survey. Nothing is sent with no app linked,
+  and the phone no longer asks the unit anything to find out. Everything else as 1.17.11.
+
+How: xsSave() (the only place a section is saved - Tools > Cross section, Timer or Manual) ends with appsPrint("XSEC new id=N\r\n"),
+  the same unasked-line path the CrossTalk verdicts (XCHK) use since 1.17.10. 80 bytes of program.
+
+Test for Sully (Tacheo56EB, cavec, with the phone app 1.9 and the phone page that has Test builds):
+  1. Phone: Home > Update the Survey Device > tick Test builds at the bottom. Tacheo56EB should show "1.17.12 test build".
+     Tap Update to 1.17.12 (about 2 min, phone next to the unit). This is the Bluetooth update test.
+     If it stops part way: the unit waits in its update mode - plug it into Topside and update over USB (1.17.12 is in Topside's folder).
+  2. After it restarts: Survey > connect Tacheo56EB, start or open a survey.
+  3. On the unit itself (don't touch the phone): Tools > Cross section, sweep. Within a few seconds of the section page the phone should
+     buzz, a + appears at the station in the book page and a card with the outline.
+  4. From the phone: tap Cross section - the unit opens its cross section screen; sweep; same result.
+  5. With the phone disconnected take a section: nothing breaks; it comes over later with Receive.
+
+Simulator (cloud, 2 CPUs, every run_all.sh scenario, each with a clean simfs):
+  cave   243 scenarios 1751 pass 55 fail; cavec 243 scenarios 2198 pass 54 fail. Against the trunk 1.17.11 (89548b9b) built with the same
+  sim.cpp: every scenario identical except the new one, v117c_xsnew (6 checks: the phone told once, nowhere else; XSEC=N then sends it;
+  no app - nothing sent, still READY) - 6/6 on 1.17.12, 5/6 on 1.17.11 (it sends nothing). The fails and the corrupt_copy / migrate_v1
+  crashes are the same in the baseline. sap5xc: v117c_xsnew 6/6, v11647_xsec 30/30, v11663_xs_manual 16/16, v11711_open 13/13. sap6: v117c_xsnew 6/6,
+  v11711_open 16/16 (the sweep scenarios don't run on the sap6 build).
+
+
+Tacheo firmware 1.17.11 - "OPEN" command: the phone opens Cross section on the unit
+=====================================================================================
+Built 19 Nov 2026 01:28 PT for cavec (T1 / v1 cave unit with the colour screen), cave (T1 OLED) and sap5xc.
+Not for Drive until Sully has tried it on a unit.
+
+WHAT AND WHY
+Sully (19 Nov 2026): "When you tap 'cross section' button, the selected Tacheo will automatically switch the the
+cross section function in the surveyors hands. Think Command and Control - the app can control the device. No words
+have to be spoken, when the surveyor sees the cross section function open, they know to immediately take a cross
+section there."
+
+HOW
+New console / Bluetooth commands (the phone app's Tacheo page sends them; USB works too):
+  OPEN=xs      opens Tools > Cross section. At READY or a result: at once, with the message chime (so the surveyor
+               looks down), then the aim page. Inside a menu or another tool (Sketch, Lineplot, Stations...): the unit
+               backs out first, as a long MENU press would, then opens it. Already open: OK, nothing to do.
+               Reply "OK OPEN xs". Refused "OPEN BUSY" during a shot or calibration hold, a running sweep, a countdown
+               or standby - the phone shows that and the surveyor is asked by voice as before.
+  OPEN=ready   leaves any tool or menu for READY. Reply "OK OPEN ready".
+  OPEN?        "OPEN ready" / "OPEN result" / "OPEN xs" / "OPEN xs sweeping" / "OPEN page" / "OPEN busy" / "OPEN standby".
+  anything else: "OPEN BAD (xs or ready)".
+Serial line "open,xs,phone" and a usage-log mark (T 7) when the tool is opened this way.
+Code: btWantXs / btWantReady flags set in handleCommand; checked in loop() at READY/RESULT (opens xsTool), in the
+two-button menu state (closeMenu), and in waitButton / waitButtonReady (return -1 with leaveMenu, as a long MENU).
+xsToolOpen flag set/cleared by xsTool() for OPEN? and the already-open case. Everything else as 1.17.10.
+
+THE TEST FOR SULLY
+1. Update a unit in Topside (Update a unit > the 1.17.11 package for its build).
+2. Phone app > Tacheo page > pick that unit > tap "Cross section". The unit should chime (two notes) and show the
+   Cross section aim page ("Point it along the passage, then start"). Take one as usual.
+3. Open the unit's menu, tap "Cross section" on the phone again: the menu closes and the aim page opens.
+4. Tap "Back to Ready" on the phone (OPEN=ready): the unit returns to READY.
+5. Start a shot hold and tap "Cross section" during it: the phone should say the unit is busy, nothing changes on the unit.
+
+SIM RESULTS (cloud container, Firmware sim of 19 Nov, all 243 scenarios, new sketch vs the 1.17.10 trunk sketch)
+  cavec : 2246 pass / 54 fail  - identical to 1.17.10 except v11711_open 13/13 PASS (new)
+  cave  : 1745 pass / 55 fail  - identical to 1.17.10 except v11711_open 16/16 PASS (new; the two-button menu case)
+  sap5xc: 2292 pass / 42 fail  - identical to 1.17.10 except v11711_open 13/13 PASS (new)
+  The 54/55/42 fails and 3 segfaults (corrupt_copy, migrate_v1, v1103_start_times) are the same lines on the 1.17.10
+  baseline in this container (simfs / renames on this filesystem) - not from this change.
+  Flash: cavec 98% (796068 of 811008 bytes), sap5xc 96%, cave 79%. cavec has ~15 kB left - the next feature on
+  cavec needs trimming somewhere.
+
+FILES
+  Tacheo_v1.17.11_cavec.zip / .uf2 / .elf     Tacheo_v1.17.11_cave.zip / .uf2 / .elf     Tacheo_v1.17.11_sap5xc.zip / .uf2 / .elf
+  src\  the sketch as built.   sim\sim.cpp, run_all.sh: + scenario v11711_open.
+
+
+released 2026-11-18 (firmware channel on GitHub, no new Topside: Topside 1.6.108+ offers it; Sully: "Push out the update to GitHub or drive when ready.")
+Tacheo firmware 1.17.10 (cave = Tacheo 1 OLED, cavec = Tacheo 1 colour) - 18 Nov 2026 - CrossTalk with a phone or tablet on
+================================================================================================================
+
+What (Sully, 18 Nov 2026, Paul's two T1s on 1.17.9 still not linking):
+  "Could it be one is already connected to his phone?" / "during digital sketching the devices wouldn't cross talk when
+  connected to the tablet" / "They should be able to connect to phone and other Tacheos and devices" / "Have a data receive
+  page on the phone app too ... That means the Tacheos are connected to each other, and the app."
+
+  Paul's reports (18 Nov, both 1.17.9, the whole day since the 07:27 install): the 1-button dialled the 2-button 8 times and
+  every dial was given up after 6 s (XLINK dial=8 stuck=8 refused=0); the 2-button never dialled (dial=0) and had the
+  1-button on its "said no" list (XTALK declined=1, mode=0).
+
+FIX (nothing to set, either unit):
+  - A unit with a phone or tablet linked stays visible to its partner. Bluefruit puts advertising back after a disconnect
+    only when NOTHING is left connected, and the refusals (a Tacheo asking by connecting, a stranger) returned before
+    putting it back: with an app on, one brief connection from another Tacheo left the unit invisible until the app let go,
+    so the partner's dials went nowhere ("Waiting:"), and a CrossTalk link that dropped never came back ("Lost:"). Now
+    advertising is put back after every connection and disconnect while a slot is free, and checked once a second.
+  - Two apps at once (the Topside phone app and SexyTopo / TopoDroid on a tablet): every shot goes to every app (was: the
+    newest app only), and the console's answers go back to the app that asked (Bluefruit sent them to the newest link,
+    which could be the partner). READY shows BT2 with two apps.
+  - A unit whose two link slots are both taken by apps dials its partner itself, whichever address is lower (a 1.17.9+
+    partner takes the link either way round).
+  - A partner that takes our dial and drops it at once (it said no, or ended CrossTalk this power-on) is counted
+    (DIAG XLINK peerdrop=), we listen again at once (1.17.9 counted it as a stuck dial after 6 s), and after 3 in a row
+    READY says "<partner> isn't accepting. Pair now on it too." and dials every 30 s.
+  - The unit that said no is asked again about a unit still asking by connecting 2 min later (was: never, until switched
+    off). A No still holds for 2 min.
+  - Every advert and scan response is the same 31 bytes (padded with zeros): this Bluefruit keeps the length of the first
+    advert it ever sent, so a longer one later was cut short.
+  - For the phone app's CrossTalk page: each CrossTalk pair's verdict goes to every app ("XCHK AGREE|CHECK dA dI dD seq"),
+    and LINKS? answers how many apps are linked, whether the partner is linked, its signal and this unit's role.
+  - DIAG RADIO adds apps= periph= adv= advup= advfail= appups=.
+
+Tested: the simulator's mock now behaves as the real Bluefruit (advertising restarts by itself only with no link left, no
+advert with both slots taken, nothing connects to a unit that isn't advertising). New scenarios v11710_tablet_dark,
+v11710_two_apps, v11710_slots_dial, v11710_peer_drop, v11710_decline_cool. NOT tried on a unit (Sully's word).
+
+
+released 2026-11-17 (Topside 1.6.106, Windows + Mac; Sully: "right now only paul has 2 T1s. So go ahead and push out a fleetwide update without testing on a device first.")
+Tacheo firmware 1.17.9 (cave = Tacheo 1 OLED, cavec = Tacheo 1 colour) - 17 Nov 2026 - CrossTalk can't stall on "Waiting:"
+================================================================================================================
+
+What (Sully, 17 Nov 2026, Paul's two T1s on 1.17.8 both stuck on "Waiting:"):
+  "You're missing the problem: crosstalk isn't working" / "New firmware units should see old firmware units regardless" /
+  "Run some simulations: I can't message every user and tell them to try to do certain settings, it needs to be easier."
+
+  Paul's reports (17 Nov, both 1.17.8): both units had said yes and were waiting for each other; neither ever linked and
+  neither recorded a single failed attempt (XLINK ups=0 failed=0 gattto=0 on both). The 1-button (lower address) is the one
+  that dials.
+
+  The cause the simulator reproduced: Nordic's radio stops the scanner whenever a dial is started, even when it refuses the
+  dial, and Bluefruit's Scanner.isRunning() is not told. 1.17.8 never listened again after one refused dial, so the dialling
+  unit sat on "Waiting:" until it was switched off and on (v1179_xtalk_stall). A dial that never gets through had no time
+  limit either.
+
+FIX (nothing to set, either unit):
+  - A refused dial starts the scanner again at once.
+  - A dial not through in 6 s is given up (sd_ble_gap_connect_cancel) and the scanner started again.
+  - While a unit should dial and isn't linked, its scanner is started again every 10 s.
+  - Two units on 1.17.9 take the link whichever one dials: if the lower address hasn't dialled in 12 s, the other dials it.
+    Its advert's 'A' record carries a new byte 7 (bit 0) saying it can; an older unit never has it, so it is never dialled
+    the wrong way round (it could only use the link its own way - the simulator shows 1.17.8 failing that way).
+  - Both dialling at once: one link kept, the same one on both units (the one the lower address dialled).
+  - Roles and messages follow the link as it is (both on Auto: the unit that dialled is the FS, the same on both units).
+  - DIAG XLINK adds dial= refused= stuck= other= dup= lc= peer2= (our dials, refused by the radio, given up, dialled with
+    the higher address, both dialled, this unit the link's central, partner says it is 1.17.9+).
+
+  With an older partner (1.17.8 and before) the first three still apply on this unit's side; the 12 s cross-dial needs both
+  on 1.17.9.
+
+Simulator (cloud, both builds):
+  - New scenarios v1179_xtalk_stall / cross / dial / old / dup (mock: a dial stops the scanner even when refused; a dial can
+    be refused or hang). 1.17.8: all five fail (stall: one dial, never another). 1.17.9: 45 / 45 checks pass on cave and on
+    cavec - linked 0.5 s after a refused dial; the cross-dial at 12.5 s; an older partner never dialled.
+  - Full suite, 231 scenarios, 1.17.9 vs 1.17.8 with the same sim.cpp: no new failures on cave or cavec. One check changed
+    on purpose: v11647_xtalk_mixed's advert is now 8 bytes ('A' + the new byte).
+
+Build (cloud kit, gcc 13.2): cave 639,680 B (78 %), cavec 791,340 B (97 %); 0 unaligned literal block loads.
+
+Try: both of Paul's units (or any two T1s) on 1.17.9, pair as usual (yes on both). They should link within a few seconds;
+if the one with the lower address can't dial, within ~13 s. Then a report from each: DIAG XLINK's new figures say how.
+
+
+Tacheo firmware 1.17.8 (cave = Tacheo 1, cavec = Tacheo 2 colour, sap5x, sap5xc) - 16 Nov 2026 - NOT YET TRIED ON A UNIT
+================================================================================================================
+
+What (Sully, 16 Nov 2026):
+  "Unfreese the frimware and update the tacheo. On the phone, Have the appearance similar to the modern day chat message
+   session. This will only be a one way message. Have the message pop up on the tacheo during whatever screen the surveyor
+   is currently on." / "this will be for all devices: sap5, sap6, sap5xc, T1 and T2." / "Do a smaller than full screen, like a
+   popup message," / "slightly dim the background around the message, and the message appears in a box in the middle" /
+   "In settings, if you can, have a way to retrieve previous messages sent to the Tacheo."
+
+  Messages from the Topside phone app (Survey and sketch > the chat panel):
+  - The phone sends MSG=<text> / MSG+=<more> / MSGGO=<id> over Bluetooth (the console, Nordic UART). USB works too.
+  - The message pops up over whatever page is showing, with a chime (two rising notes): the page dimmed round it (OLED: every
+    other dot; colour: each colour a step darker, the battery pill as it is) and the message in a box in the middle,
+    MESSAGE / phone in its title, up to 100 characters.
+  - Any button puts it away; that press does nothing else. The page comes back exactly as it was.
+  - It waits while the unit can't be interrupted: a shot being measured, a calibration hold, the tap-countdown, a cross-section
+    sweep, standby, the start-up animation - and shows the moment that's over.
+  - The unit tells the phone MSG SHOWN <id> when it's up and MSG READ <id> when a button put it away (the phone's ticks).
+  - Settings > Messages: the last 10, newest first, with the time the phone set (TIME=) - pick one to see it in the same box.
+    Kept in /msglog.bin over a restart.
+  - MSG? answers MSG <IDLE|WAITING|SHOWING> <id> <shown> <read> <kept> (and tells the phone this firmware has messages).
+
+How:
+  msgCommand() in handleCommand; msgService() at the end of service() (every page's wait calls it); msgPopup() keeps the
+  page's picture (the 128 x 64 buffer, the 1.5" buffer, and on the colour screen its 38 KB frame in /msgpage.bin on the
+  2 MB chip - there is no RAM for a second frame), draws the dimmed page and the box, waits for a button (service() still
+  runs; awake while it waits, away by itself after 10 min), and puts the picture back. MsgHoldGuard in measureShot() and
+  capturePoint(). Settings > Messages is the last row before Back (SET_MSGS; the sim's SETTINGS_MSGS_ROW).
+  sap5x: unfrozen (it was held at 1.16.30 since 21 Oct) - everything from 1.16.31 to 1.17.8 comes with it.
+
+Simulator (Firmware sim, scenario v1178_msg - over READY, over the menu, held, MSG?, Settings > Messages):
+  cave 231 scenarios, cavec 231, sap5xc 231, sap5x 231: the same results as 1.17.7 apart from v1178_msg (13/13 on each);
+  cavec v11657_spam's long-standing "sent N transfers too early" note moved by one transfer (timing). ASan/UBSan clean
+  (cavec: v1178_msg, settings_persist, v11688_settings). The colour page's keeping on the 2 MB chip can't run in the
+  simulator (no chip there: it draws the page again instead) - CHECK IT ON THE UNIT.
+
+Real builds: cave 638,112 B (78 %), RAM 64 %; cavec 790,028 B (97 %), RAM 87 %; sap5xc 774,812 B (95 %), RAM 86 %;
+  sap5x 564,760 B (69 %). 0 unaligned literal loads.
+
+Test it (your unit, before the fleet):
+  1. Flash it. In the phone app (Android 1.7): a survey > 📡 > connect > 💬, send "Test message one" to the unit.
+  2. On READY: the chime, the page dimmed, the box in the middle. Press SHOT: gone, READY as it was, no shot taken.
+     The phone's bubble: ✓ sent, ✓✓ on screen, Read.
+  3. Open the menu and send another: it pops up over the menu; MENU puts it away and you're still in the menu.
+  4. Colour unit: the page after the box must be the colour page exactly as it was (this is the 2 MB chip path).
+  5. Take a shot and send one while it measures: it waits, then shows when the result is up.
+  6. Settings > Messages: both listed, newest first; pick one: the same box.
+  7. Restart the unit: Settings > Messages still has them.
+
+
+Tacheo firmware 1.17.7 - cave build (Tacheo 1 OLED, two buttons) and cavec (Tacheo 1 colour, one button) - 16 Nov 2026
+================================================================================
+
+WHAT AND WHY
+Paul, in Tacheo Testers, about his 1-button and 2-button units:
+  "On the 1 button unit, at Ready, quick tap starts timer for station shot, long press for LRUD. I prefer this
+   method as holding the button for a shot introduces movement from tense muscles. The 2 button unit is the
+   opposite ... They need to function the same regardless, as it is confusing as they now function."
+Sully: "Yep, do all fixes."
+
+Until now the tap-countdown (1.16.77) was on the one-button colour builds only (sap5xc, cavec, sap6c). The
+two-button builds kept hold = shot, tap = LRUD. From 1.17.7 every build works the same way:
+
+  READY      tap SHOT              = the countdown shot. Settings > Shot timer (1.5 - 5 s) counts from the
+                                     let-go; hands off while the bar fills; beep = shot
+             SHOT held 0.5 s       = an LRUD, taken at the half-second mark
+             any press during the countdown (SHOT or MENU) calls it off (a warning beep). That press is used
+                                     up: no new countdown, no menu
+             MENU                  = the menu (as before)
+             MENU held             = Stations (as before)
+             SHOT + MENU together  = nothing (they are the 3-s switch-off)
+  RESULT     tap SHOT              = back to READY (the next tap is the countdown)
+             SHOT held 0.5 s       = an LRUD
+             MENU / MENU held      = the menu / Stations (as before)
+  Tools' hold-for-a-shot pages (Rigging, the tutorial's practice): tap = the countdown, as on READY.
+  The tutorial's two-button pages say so ("Aim the dot. Tap 1: hands off while the bar fills"; "Hold 1 half
+  a second: LRUD shot"). The Settings row reads "Shot timer" on every build.
+
+HOW
+- TAP_ANY (new, 1 on every build) compiles the countdown code; TAP_SHOT still marks the one-button colour
+  builds (their 2-tap menu). tapShot() is true on every build. On the OLED builds soloKeys() is false and the
+  tap tracking's names (soloTapUpAt, SOLO_LRUD_MS, soloForget) exist. The OLED's SHOT click is decided at
+  its let-go, so there is no 0.4-s wait.
+- READY and a result: a SHOT + MENU press marks both buttons ignored, so the switch-off combination never
+  becomes an LRUD or a menu. MENU during the countdown calls it off. MENU held = Stations is kept in the
+  tap branch.
+- Also fixed while building: the cave2 build failed build_fw.sh's unaligned-literal scan. Live sensors'
+  "No reading" was copied with strcpy, which compiles to a block load from an odd address (the 1.17.2 FRONT
+  crash's cause). It now goes through litCpy (noinline). The trunk had this already, so it isn't caused by
+  this change; cave2 now builds clean. No cave2 package was made.
+
+SIMULATOR (copy at $HOME/simwork, full suite, against the trunk sketch 1f2d529f... as the baseline)
+  New scenario v1177_two_tap: 24 pass, 0 fail on cave and cave2 (ASan/UBSan clean on cave). It covers:
+    tap -> countdown -> leg (az 123.42 / clino 12.29, true 123.40 / 12.30)
+    result tap -> READY
+    MENU and SHOT cancels
+    0.5-s LRUD
+    MENU -> menu
+    MENU held -> Stations
+    SHOT + MENU 1.5 s -> nothing
+    tutorial text
+    Shot timer row
+  cave, cave2, cavec, sap5xc: every other scenario's result is identical to the baseline (0 new fails).
+  The older two-button scenarios keep hold = shot through simLegacyTap2 (only v1177_* use the new rules).
+  sim.cpp and run_all.sh: + v1177_two_tap, + simLegacyTap2.
+
+REAL BUILD (arm-none-eabi-gcc 13.2.1, the kit)
+  cave   1.17.7: 634,144 bytes (78 %), 0 unaligned literal loads   -> Tacheo_v1.17.7_cave.zip / .uf2 / .elf
+  compile checks only (not packaged): cavec 96 %, sap5xc 94 %, cave2 90 % - all 0 unaligned loads.
+
+ALSO IN 1.17.7 (both builds) - CHECK ADVISED LESS OFTEN
+Paul: "How do I get rid of the check advised warning when last check was 15 or more starts ago?" Sully: "He wants it less frequent."
+  The start-up health page asked for a Check after 15 power-ons without one (CHECK_DUE_STARTS). It is now 50. A Check that is due
+  only by count is still cleared sooner by backsights that agree (EXCELLENT), and a failed Check, backsight error, bad calibration
+  figure or temperature change still ask for one at once.
+  Sim: v1177_check_due (20 and 49 starts: nothing; 55: CHECK ADVISED "No Check: 55 starts") 4/4 on cave and cavec; v12_health's
+  expectation moved from 20 to 55 power-ons; full suites on cave and cavec identical to the baseline otherwise.
+  cavec 1.17.7 = cavec 1.17.5 + this + litCpy (it already took shots with a tap). 783,996 bytes (96 %), 0 unaligned loads.
+  Paul's one-button unit is a cavec (his A/B partner for the OLED) - update it with this too, after Sully's own cavec (TCH-260004).
+
+TEST FOR SULLY (on your own two-button unit before anyone else's)
+  1. Update in Topside (Devices > the unit > firmware 1.17.7), or drag the .uf2 onto the XIAO's drive.
+  2. READY: tap SHOT, let go, hands off. You should hear a tick each second, then the shot beep, then the
+     result.
+  3. Tap SHOT on the result: READY. Tap again, then press MENU during the countdown: called off, no menu.
+  4. Hold SHOT: at half a second there's a tick and an LRUD.
+  5. MENU: the menu. Hold MENU: Stations.
+  6. Hold SHOT + MENU for about 1 s: nothing. For 3 s: switches off, as before.
+  7. Menu > Tutorial > Basics: the pages say tap = shot, hold = LRUD.
+  cavec (TCH-260004): update to 1.17.7; a normal tap shot, a half-second LRUD, and the start-up health page as before.
+  If it's good, Paul's OLED (TCH-260002, still on 1.16.64) goes to 1.17.7. That also brings its CrossTalk
+  up to date with his other unit.
+
+
+released 2026-11-12 (Topside 1.6.62, Windows + Mac)
+Tacheo cavec 1.17.5 - BENCH MODE (11 Nov 2026). Built for the T1 LCD (TCH-260004).
+
+WHY
+Sully: "design a bench test in topside ... runs the Tacheo while plugged in and will receive inputs from my computer ... a control mode over Bluetooth ... take shots every few seconds until battery runs dead"; "add a port to Topside so you're able to run topside yourself and use the Tacheo yourself via bluetooth"; "Autonomy on your part, removing me as the middle man."
+
+WHAT (new serial / Bluetooth commands; everything else as 1.17.4)
+- BENCH?  one status line: run, run time, shots, misses, restarts, up time, shots this power-on, battery mV and %, USB, page, temperature, the run's settings.
+- KEY=<seq>  the virtual finger. s = shot button, m = menu button, p = pause, each followed by ms held (s120 = a tap, s1500 = a hold, p500 = wait). Example KEY=s120,p800,s120. The firmware reads these as real presses, so every page and menu behaves exactly as under a thumb.
+- RUN=T,<every s>[,<max shots>[,<tap ms>]]  torture: a shot every N s (cadence from each shot's first press).
+- RUN=S,<station s>,<shots>,<between s>[,<max>[,<tap ms>]]  survey day: a station every N s, M shots per station, K s apart.
+- STOP  ends a run. A run also ends on: a real press on the unit, standby, max shots, 5 missed shots in a row.
+- The run lives on the unit (/bench.bin): it keeps going without the computer and resumes after a watchdog / crash restart (counted as restarts=).
+- Trip log 'H' every minute: mV, temperature, shots - the battery curve. Also H on start, end (with the reason), menu stall, miss and resume.
+
+HOW TO TEST (TCH-260004, on USB, Topside's terminal or any serial monitor)
+1. BENCH?  -> "BENCH run=- ..."
+2. KEY=s120  -> the countdown starts and a shot is taken, as a tap would.
+3. RUN=T,10,4  -> four shots 10 s apart, then "bench: run T ended (3)".
+4. RUN=S,60,3,8  then press the shot button on the unit -> the run ends ("ended (2)").
+5. EV  -> the H records are in the trip log.
+
+SIM (cavec, 229 scenarios vs a 1.17.4 baseline built from the same sim.cpp)
+- New scenario v1175_bench: 12 pass, 0 fail (virtual tap, T run to max, S run station timing 8 s / 30 s, a real press ends it, bad commands refused, trip log H).
+- Whole suite: 2114 pass / 54 fail vs the baseline's 2103 / 65; 0 new fails (the 11 gone are v1175_bench on the baseline). The same 3 sim segfaults in both (corrupt_copy, migrate_v1, v1103_start_times - pre-existing).
+- Real build: 788,508 bytes (97% of flash), RAM 204,480 (86%); 0 unaligned literal loads.
+
+
+Tacheo firmware 1.17.4 - cavec (Tacheo 1, colour screen, 1 button) only - 10 Nov 2026. On Sully's PC only, NOT on Google Drive.
+
+WHAT AND WHY
+Sully, 10 Nov 2026: "add 2 more about cavway."
+
+HOW
+Two more start-up messages on the colour screens (with 1.17.3's BEAT MY PRICE, CAVWAY / ...THEN ADD AN LCD.):
+  CAVWAY CALLED. / IT WANTS MY SCREEN.
+  SORRY, CAVWAY. / MORE MAP, LESS CASH.
+The colour pool is now 63 messages + the owner greeting = 64, the start-up deck's limit (a 64-bit "used" mask): any more must
+replace one. (These are the start-up messages; the switch-off ones are a separate list of 58.)
+Everything else as 1.17.3 (cross sections always closed) and 1.17.2 (the FRONT crash fix etc.).
+
+SIMULATOR (PC VM, cavec, 227 scenarios, against 1.17.3 from the same sim)
+- The same results. v11638_msg_deck: 63 start-up messages; with a name all 64 can be shown, never twice in a row, every one
+  before any again; without a name 53 (the @ ones need a name).
+
+BUILD: scan_unaligned 0.
+
+
+released 2026-11-10 (on Sully's PC only)
+Tacheo firmware 1.17.3 - cavec (Tacheo 1, colour screen, 1 button) only - 10 Nov 2026. On Sully's PC only, NOT on Google Drive.
+
+WHAT AND WHY
+Sully, 10 Nov 2026: "Cross section assistant: connect all lines. Dont have a section unconnected." and "replace a message with a
+little competitive quip about Cavway. Something saying my device is better, he cant beat my sales price, Mine has an LCD".
+(Sully on 1.17.2: "the Tach works well now.")
+
+HOW
+1. Cross sections: the outline is always closed (3 readings or more) - the last reading is joined back to the first, across
+   the widest gap. Up to 1.17.2 an outline with a gap over 60 deg between neighbouring readings (a floor left out, a doorway)
+   was left open there. The section's header now says closed=1, so Topside's .svg draws a closed polygon too.
+   (Topside's source also draws every saved section closed, older ones included - in the next Topside build.)
+2. Start-up messages on the colour screens: "BEAT MY PRICE, CAVWAY / ...THEN ADD AN LCD." in place of
+   "THE IRON IS / OUT THERE." (lines are 21 characters at most; longer ones are never shown).
+Everything else as 1.17.2 (the FRONT crash fix, the crash record, FPU interrupt off, dot off at switch-on, no saucer on the menu).
+
+TEST FOR SULLY
+Tools > Cross section: shoot a section with a gap (skip the floor): the outline joins all the way round.
+
+SIMULATOR (PC VM, cavec, 227 scenarios, against 1.17.2 from the same sim)
+- Identical except v11647_xsec: "a sweep with the floor left out" now expects the outline closed across the gap - 44/44
+  (1.17.2: 43/1). The message check (every start-up message fits, with and without an owner name) passes.
+
+BUILD: 782,556 B flash (96 %), 33,280 B RAM free. scan_unaligned: 0.
+
+
+released 2026-11-10 (on Sully's PC only; tried on TCH-260004 - Sully: "the Tach works well now")
+Tacheo firmware 1.17.2 - cavec (Tacheo 1, colour screen, 1 button) only - 10 Nov 2026. On Sully's PC only, NOT on Google Drive.
+
+WHAT AND WHY
+Sully, 10 Nov 2026, TCH-260004 on 1.17.1: "device crashes still on shot taken"; "remove the iron invaders icon from the main
+menu. Its overlapping into the next screen an onto text".
+
+THE SHOT CRASH - FOUND
+1.17.1's crash record worked and named it: PC 0x603B2 in cvResult() (the colour result page), LR 0x5FF93, thread mode, stack
+0x20038A90, usage fault UNALIGNED (trip log V 5 = 0x01000000). The instruction is an 8-byte block load (ldmia) of the chip text
+"FRONT": -Ofast turned strcpy(chip, "FRONT") into a block copy that needs the text word-aligned, and the linker (ld 2.42) put
+the merged string pool at an odd address (0xDD681). Every ordinary front shot shows "FRONT", so every front shot crashed on its
+result page. The same trap is in 1.16.97 and 1.16.98 (checked), and most likely explains Paul's 1-button "crash on a quick-press
+shot" since 1.16.94 (a tap shot is a front leg). The "fault inside an interrupt" theory of 1.17.0 was wrong.
+
+HOW
+1. The result page's chip texts (FRONT, FSx3 GOOD, LRUD, SENSOR FAULT) are copied by cvCpyLit, a small function that is never
+   inlined: the library strcpy reads any alignment.
+2. BUILD CHECK: build_fw.sh now runs scan_unaligned.py on every build and FAILS it if any block load (ldm / ldrd) takes its
+   address from an odd literal. 1.17.1 fails it (the FRONT load); 1.17.2 and SAP6 1.16.30.3 pass (0).
+   (-fno-merge-constants was tried and does not help: the sketch's optimize("Os") pragma / attributes turn merging back on.)
+3. Main menu: the Iron Invaders saucer after "Calibrate" in the tab rail is gone (it ran into the right pane, over the text).
+   The game's own row inside Calibrate keeps its icon.
+Everything else as 1.17.1: the crash record survives restarts, FPU interrupt off, no keep-alive, the dot off at every switch-on.
+
+OPEN
+Sully: "double clicking from ready doesnt go to menu ... I have to click once to get the laser to activate, then it will accept
+a double click". The simulator (one-button rules) opens the menu on a double-click with the dot off (new v1171_dot_menu 2/2), so
+this unit's taps aren't being read the same way. Next report after trying it: the usage log has each press's timing.
+
+TEST FOR SULLY (TCH-260004)
+1. Install 1.17.2. Switch on, tap (dot), tap (shot): the result page shows FRONT and the unit does not restart.
+2. Take 10 shots at walls; open the main menu: no saucer by Calibrate.
+3. Switch on, double-click at once (dot off): menu? Send a report either way.
+
+SIMULATOR (PC VM, cavec, 227 scenarios, against 1.17.0)
+- Identical to 1.17.0 except v11698_laser_ready (8/8, the dot starts off) and v1170_keep (OLED-only now); new v1171_dot_start 9/9,
+  v1171_dot_menu 2/2 (both on the one-button rules). The OLED (cave) build passes v11698 / v1170_keep.
+  (The simulator draws the page but can't fault on alignment: the build check is what guards this.)
+
+BUILD: 782,604 B flash (96 %), 33,280 B RAM free. scan_unaligned: 0.
+
+
+released 2026-11-10 (on Sully's PC only) - crashed on every front shot (the FRONT literal, fixed in 1.17.2)
+Tacheo firmware 1.17.1 - cavec (Tacheo 1, colour screen, 1 button) only - 10 Nov 2026. On Sully's PC only, NOT on Google Drive.
+
+WHAT AND WHY
+Sully, 10 Nov 2026, TCH-260004: on 1.16.98 and 1.17.0 it crashed on every shot, then froze with the laser going off and on;
+"this is an extremely unstable build", "build fixes onto my topside and Ill test them". Shots worked on 1.16.97.
+1.16.98 - 1.17.0 are withdrawn from Drive (Topside back to 1.6.57).
+
+HOW
+1. CRASH RECORD THAT SURVIVES THE RESTART. Every crash and freeze on every Tacheo since the catcher went in (1.12.1) was
+   logged "at 0x00000" with no call addresses. The record sat at the bottom of the 2 KB main stack, and the board core's
+   start-up code paints that whole stack (0xADADADAD) at every reset, before the firmware runs: the record was always gone.
+   It now sits in the top 64 bytes of the heap, just under the painted stack, where nothing writes at start-up. So the
+   next crash names where it happened: trip log Z (PC), V 0-3 (return addresses), V 4 (stack pointer), V 5 (interrupt
+   number | 0x8000 from an interrupt | usage-fault bits << 16). Decode against Tacheo_v1.17.1_cavec.elf.
+   PROVE IT FIRST: Topside's serial console (or any terminal) -> CRASHTEST!  The unit restarts; the next report must show
+   a crash with a real address (not 0x00000).
+2. FPU INTERRUPT OFF AGAIN (as 1.16.97). 1.16.98 turned it on; it did nothing for the standby drain (TCH-260004 held
+   0.6-0.9 mV/h for 20 h on 1.16.98 while it misfired 7.4 M times), and 1.16.98's handler wrote to stale stack memory.
+   The FPU flags and pending bit are still cleared before every standby sleep.
+3. READY KEEP-ALIVE ONLY ON THE OLED. 1.17.0 re-sent "dot on" every 5 s on READY for the 2-button's MC1; on TCH-260004's
+   module the dot went off and on. The cavec no longer sends it (its dot stays lit by itself).
+4. LASER OFF AT EVERY SWITCH-ON (Sully: "when it turns on and starts up, startup with the laser off. 1 click turns the
+   laser on, then 1 click starts the countdown"). Cold start or a double-click out of standby: READY with the dot off.
+   The first tap only lights it; the next tap takes the shot (after the Shot timer's countdown). From then on READY keeps
+   the dot lit (a shot's data screen puts it out, a tap back to READY lights it) until the next switch-off.
+5. NOT CHANGED: no hardware watchdog (it would keep running into the update bootloader, which on the XIAO most likely
+   doesn't feed it, and cut firmware updates off). The parked standby (stay-in-standby) is unchanged - it held the battery.
+
+NOT FIXED YET
+The crash on a shot / after a standby wake itself (18:01: crashed ~4 s after waking from standby, before any press).
+1.17.1 is built so the next one is caught with an address.
+
+TEST FOR SULLY (TCH-260004)
+1. Install 1.17.1. Switch on: READY, dot OFF. Tap: dot on, no shot. Tap: countdown, shot.
+2. CRASHTEST! from Topside's console, then a Topside report: the restart must show an address.
+3. Use it normally (shots, standby, wake). If it crashes or freezes, send the report straight away.
+
+SIMULATOR (PC VM, cavec, 226 scenarios, against 1.17.0 from the same sim)
+- Every scenario identical to 1.17.0 except the two that changed on purpose: v11698_laser_ready (now: dot off at
+  switch-on, first tap lights it; 8/8) and v1170_keep (now the OLED only; cave build 1.17.1 passes it). New
+  v1171_dot_start, 9/9: cold start dot off, 1st tap = dot only, 2nd tap = the shot, READY lit after, no keep-alive,
+  standby -> double-click = dot off again, 1st tap = dot only. Baseline failures/segfaults the same as 1.17.0.
+- The crash record's new place: tacheoFault writes at __StackLimit - 64 (0x2003F7C0), above .bss's end (0x20037E00).
+
+BUILD: 782,604 B flash (96 %), 33,280 B RAM free.
+
+
+released 2026-11-10
+released 2026-11-10 (Drive in Topside 1.6.59, 12:20-16:30) - WITHDRAWN the same evening: crashed on every shot and froze on TCH-260004
+Tacheo firmware 1.17.0 - cave (Tacheo 1, OLED, 2 buttons) and cavec (Tacheo 1, colour screen, 1 button) - 10 Nov 2026
+
+WHAT AND WHY
+Paul, 10 Nov 2026, both units on 1.16.99: the 2-button's READY laser is "back to turning off the laser at around 13 seconds";
+the 1-button "crashes repeatedly from Ready with a quick push of the button". Sully: "Apparently the laser didn't get fixed".
+(Numbered 1.17.0, not 1.16.100: the calibration record keeps the firmware version in 8 bytes, so "1.16.100" was saved as
+"1.16.10" and every new calibration would have asked to RECALIBRATE. The simulator caught it.)
+
+HOW
+1. READY keep-alive (the laser). Since 1.16.98 nothing in the firmware puts READY's dot out on a T1. On 1.16.95 the same
+   2-button went dark at 13 s while the firmware's own time-out was a minute, so the MC1 module on that unit ends its pointer
+   by itself (the 1-button's stays lit). Now the dot-on command is sent again every 5 s while READY sits idle (no press for
+   1 s, nothing measuring, no countdown). Nothing else changes: off READY the dot rules are as before, and no other page's
+   time-out moves. DIAG LASIDLE keeps= counts them. This also re-sends the dot-on after the module has finished booting,
+   which should clear the dim dot Paul saw right after switch-on.
+2. Crash catcher (the 1-button). Every crash Paul's unit recorded, on 1.16.94, 1.16.95 and 1.16.99, said "0x00000" with no
+   call addresses. That is what the catcher wrote whenever the stack pointer was in the top 256 bytes of RAM, which is
+   where an interrupt handler runs. So the crash is most likely inside an interrupt, and the catcher threw the evidence
+   away. Now the frame is read wherever it is, and it also keeps the stack pointer, which interrupt was running and the
+   usage-fault bits. Trip log V 4 = stack pointer, V 5 = exception number | 0x8000 (from an interrupt) | usage-fault bits
+   << 16. Topside shows both as "called from 0x...": read them as these.
+3. FPU interrupt (1.16.98's fix, made safe). The handler cleared the saved FPSCR at FPCAR + 0x40 even when the interrupted
+   code had saved no FPU registers. FPCAR is then stale, so it cleared bits in whatever word sat there on some old stack.
+   Paul's 1-button took 11,262 of these interrupts in 105 s. Now: with an FPU frame (EXC_RETURN bit 4 clear) the stacked
+   FPSCR is cleared as before; without one, the live FPSCR. DIAG SLEEPIRQ noframe= counts the second kind. This is not the
+   proven cause of the crash (the crashes started before 1.16.98), but it could corrupt memory.
+
+NOT FIXED YET
+The 1-button's crash itself. 1.17.0 makes the next crash name where it happened. After Paul installs it and it crashes,
+his next Topside report (or events.txt from Devices\TCH-A70CD4C0) gives the interrupt number and the call addresses to
+decode against elf\Tacheo_v1.17.0_cavec.elf.
+
+TEST FOR SULLY / PAUL
+1. 2-button: switch on, leave it on READY 2 minutes. The dot stays lit and bright.
+2. 1-button: quick presses from READY as before. If it crashes, plug in and send a Topside report.
+
+SIMULATOR (PC VM, against 1.16.99 built from the same sim)
+- The MC1 mock can end its own pointer (gDotTimeoutMs; a dot-on starts it again). New scenario v1170_keep with a 13 s module
+  time-out: 1.16.99 fails it as Paul's unit does (dark at 13 s); 1.17.0 passes 11 / 11 on cave and cavec (26 keeps in
+  2 min 10 s, never dark, none off READY, shot normal, DIAG keeps=).
+- Full suites, 223 scenarios each: every scenario's result identical to 1.16.99 on both builds (the segfaults in
+  corrupt_copy, migrate_v1 and the cavec's v1103_start_times are in 1.16.99 too).
+
+
+released 2026-11-10
+Tacheo firmware 1.16.99 - cave (Tacheo 1, OLED, 2 buttons) and cavec (Tacheo 1, colour screen, 1 button) - 10 Nov 2026
+
+WHAT AND WHY
+Sully, 10 Nov 2026: "Go ahead and build that" - Paul's flip screen "still wonky" on his 2-button unit (TCH-260002).
+On the Tacheo the screen is on the top face, so the only pose Autoflip can react to is standing the unit on its tail
+(laser more than 65 deg up), which turned the picture over for no reason. Lying flat, "buttons right" and "buttons left"
+are the same unit turned end for end, and no tilt sensor can tell those apart.
+
+HOW
+- Autoflip is OFF by default on the Tacheo (cave, cavec; cave2 too when it is built). New units start upright, buttons on
+  the right, Autoflip Off.
+- Units already set up have Autoflip switched off ONCE at the first start on 1.16.99 (a spare bit of the settings file,
+  st.pairAsked bit 8, records that it was done). Settings > Screen (Right hand / Left hand) is kept.
+- Turned back On by hand (Settings > Autoflip, or Topside's Screen / Autoflip row), it stays On, and the old
+  stand-on-end flip works as before.
+- Everything else is as 1.16.98: READY's laser dot always lit (no time-out on READY), the FPU interrupt fix, QSPI pending
+  cleared, the cavec's off loggers and quiet park. The OLED (cave) still goes fully off after 2 h of standby (the drain
+  control) - nothing about switching off changed.
+
+TEST FOR SULLY (30 seconds)
+1. Install, switch on: READY upright with the buttons on the right.
+2. Stand the unit on its tail (laser up): the picture does NOT turn over.
+3. Leave it on READY: the laser dot stays lit (no 13 s / 1 min time-out).
+
+SIMULATOR (PC VM, against 1.16.98 built from the same sim)
+- New scenario v11699_t1flip, cave and cavec: 9 / 9 - a new unit Off; a 1.16.98 unit with Autoflip On switched off once,
+  Screen kept; stood on its tail not turned over; SET=flip,2 turns it back On, the stand-on-end flip works, and it stays On
+  after a restart.
+- v110_autoflip, v1165_rhand_a/b, v11658_tabs, v11688_settings updated for the new default; same results as 1.16.98
+  (v110_autoflip's 4 nose-down failures are the baseline's, as before). v11698_laser_ready 7 / 7 on both.
+- Full suites, 223 scenarios each: the same as 1.16.98 apart from the seed-1 sensor-noise stream (Autoflip no longer reads
+  the accelerometer every 300 ms on READY): v1150_roles' "+2.9 deg" vs "+3.0", v11692_game_soft and three animation-message
+  lines. With SIM_SEED 2, 3 and 4, 1.16.99 and 1.16.98 give identical results in both.
+
+
+released 2026-11-09 (on Sully's PC only - not on Google Drive)
+Tacheo firmware 1.16.98 (Tacheo 1 colour screen = cavec, Tacheo 1 OLED = cave, SAP5 with the colour screen = sap5xc)
+- READY: the laser dot is always lit (Sully, 9 Nov 2026: "When on ready, always have the laser on. Whenever a user wants the laser off,
+  he can take a shot and keep it on the data screen."). No minute's time-out on READY, no laser switch-off with it, and the dot is lit
+  as soon as READY shows after switching on. It still goes out on the data screen (a shot's result), in the menus and in standby.
+- Standby: Nordic's fix for the FPU interrupt (nRF52840 errata 87, DevZone 12433). Ordinary float maths sets FPSCR's flags, which pend
+  the FPU interrupt (IRQ 38), and a pending interrupt stops the processor sleeping (TCH-260004 on 1.16.96: 89.7 % awake in standby,
+  IRQ 38 pending). The FPU interrupt is now enabled at the lowest priority and its handler clears the FPSCR saved on the stack, which
+  FreeRTOS restores - clearing it before each sleep alone (1.16.97) can be undone by a task switch.
+- The QSPI interrupt (IRQ 41) is cleared when the logs' flash is closed and while parked (DevZone 55476).
+- DIAG SLEEPIRQ: FPU interrupts handled, FPU / QSPI pendings cleared in standby, the interrupts seen pending in two standby looks in a
+  row (stuck), all seen, and those pending now.
+- cavec keeps 1.16.97's loggers (STBYLOG, OFFCRUMB, OFFPINS2, Device > Fully-off test) and quiet park. cave and sap5xc get the shared
+  code since their last versions (cave 1.16.95, sap5xc 1.16.93: 1.16.95's laser kept powered for compass reads).
+Test: READY left 2 minutes - the dot stays lit; a shot - the data screen, dot off; a press - READY, dot lit at once. Standby 1-2 days
+unplugged, then a Topside report: STBYLOG awake % a few % (cavec), SLEEPIRQ stuck=00000000/00000000.
+
+
+Tacheo firmware 1.16.97 (cavec only) - 9 Nov 2026 - off drain: quieter parked standby + loggers. NOT on Google Drive.
+
+WHY
+Sully, 9 Nov 2026: "Put all the loggers you can think of in the update. Obviously not enough to impact the operation of the device.
+Im still dubious whether your fix worked or not." / "I want battery to stop draining when off. This matters more than anything else."
+
+WHAT (built on 1.16.96; off is still the parked standby - the only state shown flat on TCH-260004)
+Quieter park (cuts what still draws while off):
+- D2 (the screen's DC, on R10 10k to +3V3) was held LOW with the rail off: ~0.33 mA. Now let go (input, buffer off) unless PVCC
+  then rises (R10 feeding the unpowered panel) - then LOW again. Also on the way to fully off. DIAG OFFCRUMB d2= (2 let go, 1 kept LOW).
+- Battery divider (1 M + 510 k, ~2.7 uA) switched on only for a read while parked.
+- Every plain input (no pull, no sense) has its input buffer off while parked; back at unpark.
+- Battery read every 30 s for the first 25 min of a park (unplug learning: charge lift, rate, full reading), then once in 30 min.
+- The FPU's flags and pending interrupt cleared before every standby sleep. TCH-260004's 1.16.96 standby measurement had IRQ 38
+  (the FPU) pending and the processor 89.7 % awake in that 10 s window - a pending interrupt stops the processor sleeping.
+Loggers:
+- STBYLOG: parked, every 30 min: minutes in, battery mV, chip C, awake % over 10 s. RAM ring of 128 (64 h), written to /stby.bin
+  when the park ends. Totals across standbys: parked minutes, mV change, mV/h. fpu_pend counts the FPU interrupts cleared.
+- OFFCRUMB: systemOffNow's steps (1 entry ... 7 snapshot/retained, 8 SoftDevice off call, 9 register off) in retained RAM;
+  boot_crumb = how far the last way off got. A System OFF that comes back (0xFE / 0xFF) is counted, the unit restarts and tries once
+  more instead of spinning awake. resetreas at start, dif = emulated System OFF (debugger).
+- OFFPINS2: just before System OFF - high-drive pins, sense pins, pin levels, sys = DCDC / regulator mode / 32 kHz clock / REGOUT0 /
+  SoftDevice / NFC pads / VBUS / GPREGRET / GPREGRET2.
+- Device > Fully-off test: goes into real System OFF now with all of the above; FOFFTEST off= / wake= mV.
+
+SIMULATOR (cavec, 221 scenarios, 1.16.96 sketch as the baseline)
+- New v11697_drain_loggers: 9/9 (6 samples in 3 h parked, file read back, DIAG lines, fall-through counted + one retry, crumb 9).
+- v11686_drain_test updated for the new last row (Drain test, Fully-off test, Back).
+- No new failures against 1.16.96. The same pre-existing failures/crashes in both (corrupt_copy, migrate_v1, v1103_start_times segv
+  in sim.cpp's own file handling; check_angles etc.).
+- ASan/UBSan on 10 standby/charge/off scenarios: 0 errors. cave, sap5xc, cave2 sims still compile.
+
+BUILD: 781,356 B flash (96 %, +5.2 KB), 33,328 B RAM free (-832; sbLog 792 B).
+
+TEST FOR SULLY (TCH-260004)
+1. Topside > install 1.16.97. Charge to full, unplug, Turn off as normal. Leave 1-2 days. Double-click on, plug into Topside,
+   send report. Look at STBYLOG: mV every 30 min, rate mV/h, awake % (a few % = sleeping properly), d2=2.
+2. Charge to full, unplug, Device > Fully-off test. Note the time. Leave the same 1-2 days. Double-click on (note the time), plug
+   into Topside, send report. FOFFTEST off/wake mV over your noted hours = the fully-off rate; OFFCRUMB boot_crumb 8 = reached the
+   off call cleanly, fell_through 0, dif 0.
+
+
+Tacheo firmware 1.16.96 (cavec - T1 LCD) - 6 Nov 2026 - EXPERIMENT, for Sully's TCH-260004 first
+Copyright (C) 2026 Phillip M. Sullivan. Tacheo project material.
+
+Why: TCH-260004 lost 4.10 -> 3.81 V in 45 h, almost all of it fully off (nRF52 System OFF): about 10-15 mA. Paul's units and
+his SAP6 the same. Phil's SAP6 firmware never used System OFF (it light-sleeps) and lasted months on the same hardware.
+Sully, 6 Nov 2026: "yeah, do that, Ill test it on mine".
+
+What changed (cavec only; T1_STAY_STANDBY):
+- Switched off = the parked standby (flash chip asleep, serial / I2C / SPI / ADC / PWM off, processor asleep), as the sap5xc
+  has done since 1.16.33. It no longer goes fully off after 30 minutes.
+- Fully off (System OFF) only when the cell is nearly flat (standby's smoothed reading under 3.45 V), to protect it.
+- A double-click wakes it straight to READY, with the survey and station as they were (no cold start).
+- Settings > Standby Off has no effect in this build.
+- Everything else as 1.16.95.
+
+The test: charge, unplug, switch off, leave 1-2 days, double-click it on, plug into Topside, send a report. The trip log's
+R record gives the hours in standby and the mV at both ends. TCH-260004 lost 6.4 mV an hour fully off on 1.16.92; if this
+is near 0-1 mV an hour, System OFF is the cause.
+
+Simulator: v11696_stay_standby (new, 4/4: still parked standby at 31 min and 11.5 h, a double-click is READY at once, nearly
+flat = fully off after 30 min); v11633_standby runs the real rule on the cavec too. Full cavec list: 219 scenarios, the same
+result as 1.16.95 on every one.
+
+
+# 5 Nov 2026: 1.16.95 = 1.16.94 plus (Paul's reports: the 2-button's dot dim in calibration, the 1-button crashing on quick-press shots):
+- FIXED: the laser stays powered for compass readings (as before 1.16.73): only the dot goes out. Switched off and on again for every reading, the laser module came back with its dim start-up dot - Paul's 2-button could not be aimed at the calibration marks (bright again outside calibration), and his 1-button crashed on every tap (countdown) shot, the one shot that switched the laser off.
+- NEW: if it ever crashes, the crash record keeps the functions that led to it (Topside: "called from"), so the cause can be named.
+- The storage repair is logged as J (1.16.93-94 used F, the failed shot's letter - Topside 1.6.57 tells old ones apart).
+- Simulator: full list on cave and cavec, no new failures against 1.16.94. Not tried on a unit yet.
+
+released 2026-11-04
+# 4 Nov 2026, evening: 1.16.94 = 1.16.93 plus (Sully: "All rm3100s face left of the device - can we not set axes thru an update by knowing that?"):
+- NEW: the axes are set by the firmware. Every Tacheo 1 board has its tilt sensor and compass the same way round, so Factory > Axes is no longer needed: a new unit, or one that never had its axes set ("Axes are not set"), gets them at the first switch-on after this update (accel +X+Y+Z, compass -Y-X-Z - what TCH-260002's calibrations have used). A unit whose axes were set by Factory > Axes keeps them. If a board were ever different, the first Normal calibration turns a mirrored compass round by itself, and Factory > Axes still works.
+- AFTER INSTALLING on a unit that said "Axes are not set": just do Normal > All sensors outdoors.
+- Simulator: the full list on this build, the same as 1.16.93; new scenario v11693_cave1_axes 5/0.
+
+# 1.16.93 (4 Nov 2026): Tacheo 1 with the colour screen (cavec). Everything in 1.16.92, plus (Sully: "fix all issues", after Paul's reports):
+- FIXED: a calibration that "failed to save" (Paul's colour T1, TCH-A70CD4C0: a Normal calibration finished at 0.17 and was gone after the next restart; the same unit had lost its serial number on 28 Oct). The unit's internal storage had stopped taking writes, so the new calibration lived in memory only. Now a save that fails repairs the storage on the spot - wipes it and writes back everything in memory (settings with the new calibration, serial number, owner, Options, QC, screen settings, history, backsight pairs) - and saves again. Once a power-on.
+- NEW: a storage check at every switch-on from cold: a small write read back. Storage that takes no writes is repaired before anything else is saved to it.
+- What a repair loses: the saved calibration holds and calibration records from before (the calibration itself is kept). The 2 MB chip (logs, animations, fonts) isn't touched. The trip log gets an F record; Topside 1.6.55 shows it ("The internal storage repaired itself"). DIAG adds FSHEAL repairs=N.
+- SERIAL= / SERIAL!= from Topside repairs the storage and tries again if its write fails.
+- AFTER INSTALLING on a unit that showed "Axes are not set" or lost its calibration: Factory > Axes (level, laser to north; then laser straight up), then Normal > All sensors outdoors.
+- Built 4 Nov 2026. Simulator: the full scenario list on the cavec build, the same results as 1.16.92. The repair itself runs only on the hardware (the simulator has no flash). Not tried on a unit yet.
+- Install: plugged in and running, Topside offers it (Updates and Upgrades > Tacheo). Or copy Tacheo_v1.16.93_cavec.uf2 onto the XIAO's drive (reset button twice quickly).
